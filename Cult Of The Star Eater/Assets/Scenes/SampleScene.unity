@@ -1760,7 +1760,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685504124}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
   m_Name: 
@@ -1770,7 +1770,7 @@ MonoBehaviour:
   drawTripods: 0
   boneSize: 1
   tripodSize: 1
-  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  boneColor: {r: 1, g: 0, b: 0.06289339, a: 0.5}
   m_Transforms:
   - {fileID: 685504126}
   - {fileID: 1159330485}
@@ -1855,6 +1855,32 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!143 &685504128
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685504124}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.97, z: 0}
 --- !u!1 &698094268 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8109829993498575500, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
@@ -2377,12 +2403,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 685504127}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 685504128}
     - targetCorrespondingSourceObject: {fileID: -5850753742254008971, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 443778057}
-    - targetCorrespondingSourceObject: {fileID: -3196511607817033700, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1389493666}
     - targetCorrespondingSourceObject: {fileID: 8526416534138537170, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 378984647}
@@ -2790,44 +2816,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8973646929008674074, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
   m_PrefabInstance: {fileID: 1082372717}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1389493664 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -3196511607817033700, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
-  m_PrefabInstance: {fileID: 1082372717}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1389493665 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -1063094714816996356, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
   m_PrefabInstance: {fileID: 1082372717}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1389493666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1389493664}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  boneShape: 1
-  drawBones: 1
-  drawTripods: 1
-  boneSize: 5
-  tripodSize: 4.1
-  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
-  m_Transforms:
-  - {fileID: 378984646}
-  - {fileID: 1101080949}
-  - {fileID: 1850737550}
-  - {fileID: 59905731}
-  - {fileID: 1256264155}
-  - {fileID: 2041733986}
-  - {fileID: 2075734296}
-  - {fileID: 1874838641}
-  - {fileID: 1119932251}
 --- !u!1 &1399636336
 GameObject:
   m_ObjectHideFlags: 0
