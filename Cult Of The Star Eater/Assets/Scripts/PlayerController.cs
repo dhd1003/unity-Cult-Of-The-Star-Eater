@@ -5,24 +5,27 @@ using UnityEngine.EventSystems;
 
 public class PlayerController : MonoBehaviour
 {
-    CharacterController characterController;
+    CharacterController playerCharacterController;
 
     Animator animator;
 
     public float speed = 6f;
+    
     public float jumpSpeed = 8.0f;
-    public float gravity = 1f;
+    
+    public float gravity = 9.8f;
+    public float fallVelocity;
 
     private float horizontalMove;
     private float verticalMove;
 
-    //private Vector3 moveDirection = Vector3.zero;//Preguntar JONE
+    private Vector3 playerMoveDirection;
     
 
 
     void Start()
     {
-        characterController = GetComponent<CharacterController>();
+        playerCharacterController = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
 
@@ -33,38 +36,62 @@ public class PlayerController : MonoBehaviour
     {
 
         horizontalMove = Input.GetAxis("Horizontal");
-        
+        playerMoveDirection.x=horizontalMove * speed * Time.deltaTime;
+
         if (Input.GetButtonDown("Jump"))
         {
             Debug.Log("Saltando");
         }
+
         
-        
-        //if (characterController.isGrounded) 
-        //{
-        //    animator.SetBool("IsJumping", false);
 
+        //Rota al personaje 
+        //playerCharacterController.transform.LookAt(playerCharacterController.transform.position + playerMoveDirection);
 
-        //}
-
-
-    }
-
-    private void FixedUpdate()
-    {
-        // Apply gravity
-        characterController.Move(new Vector3(0, -gravity, 0) * Time.deltaTime);
-
-
-        if (characterController.isGrounded)
+        if(playerMoveDirection.x > 0)
         {
-            if (Input.GetButton("Jump"))
-            {
-                characterController.Move(new Vector3(0, jumpSpeed, 0) * Time.deltaTime);
-
-            }
+            playerCharacterController.transform.localScale = Vector3.one;
+        }
+        else if (playerMoveDirection.x < 0)
+        {
+            playerCharacterController.transform.localScale = new Vector3(1,1,-1);
         }
 
-        characterController.Move(new Vector3(horizontalMove,0, 0) * speed * Time.deltaTime);
+        SetGravity();
+
+        //Mueve al personaje
+        playerCharacterController.Move(playerMoveDirection);
+
+
+
+
+        if (playerMoveDirection.x != 0)
+        {
+            animator.SetBool("IsWalking", true);
+        }
+        else
+        {
+            animator.SetBool("IsWalking", false);
+        }
+
+
+        Debug.Log("Toca el suelo:"+ playerCharacterController.isGrounded);
+
+
     }
+
+    void SetGravity()
+    {
+        if (playerCharacterController.isGrounded)
+        {
+            fallVelocity = -gravity * Time.deltaTime;
+            playerMoveDirection.y = fallVelocity;
+        }
+        else
+        {
+            fallVelocity -= gravity * Time.deltaTime;
+            playerMoveDirection.y = fallVelocity;
+        }
+    }
+
 }
