@@ -9,12 +9,12 @@ public class PlayerController : MonoBehaviour
 
     Animator animator;
 
-    public float speed = 6f;
+    public float moveSpeed = 6f;
     
-    public float jumpSpeed = 8.0f;
     
-    public float gravity = 9.8f;
+    public float gravity = 20f;
     public float fallVelocity;
+    public float jumpForce =20f;
 
     private float horizontalMove;
     private float verticalMove;
@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour
     {
 
         horizontalMove = Input.GetAxis("Horizontal");
-        playerMoveDirection.x=horizontalMove * speed * Time.deltaTime;
+        playerMoveDirection.x=horizontalMove * moveSpeed;
 
         if (Input.GetButtonDown("Jump"))
         {
@@ -59,24 +59,28 @@ public class PlayerController : MonoBehaviour
 
         SetGravity();
 
+        PlayerSkills();
+
+        playerMoveDirection = playerMoveDirection*Time.deltaTime;
+
         //Mueve al personaje
         playerCharacterController.Move(playerMoveDirection);
 
 
 
 
-        if (playerMoveDirection.x != 0)
+        if (playerMoveDirection.x != 0 && playerCharacterController.isGrounded)
         {
             animator.SetBool("IsWalking", true);
         }
-        else
+        else if(playerMoveDirection.y < 0)
         {
             animator.SetBool("IsWalking", false);
         }
 
 
         Debug.Log("Toca el suelo:"+ playerCharacterController.isGrounded);
-
+        Debug.Log(playerMoveDirection);
 
     }
 
@@ -94,4 +98,20 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //Funcion para las habilidades del jugador
+    public void PlayerSkills()
+    {
+        if (playerCharacterController.isGrounded && Input.GetButtonDown("Jump"))
+            {
+            animator.SetBool("IsJumping",true);
+            fallVelocity = jumpForce;
+            playerMoveDirection.y = fallVelocity;
+            
+        }
+        else
+        {
+            animator.SetBool("IsJumping", false);
+        }
+       
+    }
 }
