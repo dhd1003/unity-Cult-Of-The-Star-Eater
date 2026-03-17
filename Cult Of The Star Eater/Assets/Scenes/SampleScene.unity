@@ -709,11 +709,11 @@ Cloth:
   m_Damping: 0.4
   m_ExternalAcceleration: {x: 0, y: 0, z: 0}
   m_RandomAcceleration: {x: 0, y: 0, z: 0}
-  m_WorldVelocityScale: 0.5
+  m_WorldVelocityScale: 1
   m_WorldAccelerationScale: 1
   m_Friction: 0.5
-  m_CollisionMassScale: 1
-  m_UseContinuousCollision: 1
+  m_CollisionMassScale: 5
+  m_UseContinuousCollision: 0
   m_UseVirtualParticles: 1
   m_SolverFrequency: 120
   m_SleepThreshold: 0.1
@@ -1697,7 +1697,7 @@ Cloth:
   m_CapsuleColliders:
   - {fileID: 698094270}
   - {fileID: 872396040}
-  - {fileID: 0}
+  - {fileID: 812322525}
   - {fileID: 1677941559}
   m_SphereColliders: []
   m_SelfCollisionDistance: 0
@@ -2487,7 +2487,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685504124}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
   m_Name: 
@@ -2914,10 +2914,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.0007176796
-  m_Height: 0.005456066
+  m_Radius: 0.00051318057
+  m_Height: 0.0054560658
   m_Direction: 1
-  m_Center: {x: -0.0004225437, y: 0.0026063344, z: 0.000116162555}
+  m_Center: {x: 0.00020252561, y: 0.0026063006, z: 0.00019638008}
 --- !u!4 &814139828 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6832741891313092209, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
@@ -3082,7 +3082,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 2112
+    m_Bits: 2175
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: ebfc219b500c3b54b9ce1928ca2732af, type: 2}
   m_TargetDisplay: 0
@@ -3171,7 +3171,7 @@ MonoBehaviour:
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
