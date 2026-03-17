@@ -2620,10 +2620,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77e76e5081b454d41a1255aa0a3db53e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 6
+  moveSpeed: 4
   gravity: 20
   fallVelocity: 0
-  jumpForce: 12
+  jumpForce: 10
 --- !u!1 &698094268 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8109829993498575500, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
