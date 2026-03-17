@@ -2623,7 +2623,7 @@ MonoBehaviour:
   moveSpeed: 4
   gravity: 20
   fallVelocity: 0
-  jumpForce: 10
+  jumpForce: 9
 --- !u!1 &698094268 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8109829993498575500, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
