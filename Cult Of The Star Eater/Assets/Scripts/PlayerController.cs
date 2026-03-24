@@ -16,6 +16,15 @@ public class PlayerController : MonoBehaviour
     private bool isDashing = false;
     private float dashCooldownTimer = 0f;
 
+
+    [Header("Coyote Time e Input Buffer")]
+    public float coyoteTime = 0.2f;
+    private float coyoteTimer;
+
+    public float inputBuffer = 0.15f;
+    private float inputTimer;
+
+
     [Header("Referencias")]
     private CharacterController controller;
     private Animator animator;
@@ -36,6 +45,8 @@ public class PlayerController : MonoBehaviour
 
         originalHeight = controller.height;
         originalCenter = controller.center;
+
+
     }
 
     void Update()
@@ -56,6 +67,9 @@ public class PlayerController : MonoBehaviour
             moveDirection.x = 0; // Forzamos que no se mueva horizontalmente
             animator.SetBool("IsWalking", false);
         }
+
+
+      
 
         // 4. Salto y Gravedad
         HandleVariableJump();
@@ -100,7 +114,7 @@ public class PlayerController : MonoBehaviour
             {
                 isCrouched = true;
                 animator.SetBool("IsCrouched", true);
-                SetColliderHeight(originalHeight / 2.5f);
+                SetColliderHeight(originalHeight / 2.5f, 0.4f);
                 Debug.Log("Darcy está agachada (Movimiento bloqueado)");
             }
         }
@@ -110,35 +124,50 @@ public class PlayerController : MonoBehaviour
             {
                 isCrouched = false;
                 animator.SetBool("IsCrouched", false);
-                SetColliderHeight(originalHeight);
+                SetColliderHeight(originalHeight, 1f);
                 Debug.Log("Darcy se ha levantado");
             }
         }
     }
 
-    void SetColliderHeight(float newHeight)
+    void SetColliderHeight(float newHeight, float centerMultiplier)
     {
         controller.height = newHeight;
-        controller.center = new Vector3(originalCenter.x, newHeight / 2f, originalCenter.z);
+        controller.center = new Vector3(originalCenter.x, originalCenter.y * centerMultiplier, originalCenter.z);
     }
 
     void HandleVariableJump()
     {
         if (controller.isGrounded)
         {
+            coyoteTimer = coyoteTime;
             animator.SetBool("IsJumping", false);
-            // Solo saltar si no está agachado
-            if (Input.GetButtonDown("Jump") && !isCrouched)
-            {
-                verticalVelocity = jumpForce;
-                animator.SetBool("IsJumping", true);
-            }
         }
         else
         {
+            coyoteTimer -= Time.deltaTime;
             if (Input.GetButtonUp("Jump") && verticalVelocity > 0) verticalVelocity *= cutJumpHeight;
             if (verticalVelocity < -1f) animator.SetBool("IsJumping", true);
         }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            inputTimer = inputBuffer;
+        }
+        else
+        {
+            inputTimer -= Time.deltaTime;
+            //if (verticalVelocity > 0) verticalVelocity *= cutJumpHeight;
+
+        }
+
+        if(inputTimer > 0 && coyoteTimer > 0 && !isCrouched)
+        {
+            verticalVelocity = jumpForce;
+            animator.SetBool("IsJumping", true);
+            coyoteTimer = 0;
+        }
+        
     }
 
     void ApplyGravityLogic()
@@ -156,7 +185,7 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("IsDashing", true);
 
         // Reducimos el collider durante el dash para pasar por huecos
-        SetColliderHeight(originalHeight / 2.5f);
+        SetColliderHeight(originalHeight / 2.5f, 0.4f);
 
         float dashDirection = transform.localScale.z > 0 ? 1f : -1f;
         float startTime = Time.time;
@@ -167,7 +196,7 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        SetColliderHeight(originalHeight);
+        SetColliderHeight(originalHeight, 1f);
         animator.SetBool("IsDashing", false);
         isDashing = false;
     }
