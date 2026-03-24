@@ -51,31 +51,31 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 1. Si está haciendo Dash, ignoramos el resto del Input
+        // Si está haciendo Dash, ignora el resto del Input
         if (isDashing) return;
 
-        // 2. Lógica de Agacharse (Bloquea movimiento)
+        // Lógica de Agacharse (Bloquea movimiento)
         HandleCrouch();
 
-        // 3. Movimiento Horizontal (Solo si NO está agachado)
+        // Movimiento Horizontal
         if (!isCrouched)
         {
             HandleAnalogMovement();
         }
         else
         {
-            moveDirection.x = 0; // Forzamos que no se mueva horizontalmente
+            moveDirection.x = 0; // Forzar que no se mueva horizontalmente
             animator.SetBool("IsWalking", false);
         }
 
 
       
 
-        // 4. Salto y Gravedad
+        // Salto y Gravedad
         HandleVariableJump();
         ApplyGravityLogic();
 
-        // 5. DASH: Solo en el suelo, si no está agachado y cooldown disponible
+        // DASH y su cooldown
         bool dashInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("R2");
         if (controller.isGrounded && !isCrouched && dashInput && dashCooldownTimer <= 0)
         {
@@ -88,6 +88,7 @@ public class PlayerController : MonoBehaviour
         // Movimiento Final
         controller.Move(moveDirection * Time.deltaTime);
 
+        //Ataco volver al principio para probar escenario
         if (Input.GetButtonDown("Fire2")) TeleportToStart();
     }
 
@@ -96,7 +97,7 @@ public class PlayerController : MonoBehaviour
         float horizontal = Input.GetAxis("Horizontal");
         moveDirection.x = horizontal * moveSpeed;
 
-        // Giro de personaje (Lógica eje Z)
+        // Giro de personaje 
         if (horizontal > 0.1f) transform.localScale = new Vector3(1, 1, 1);
         else if (horizontal < -0.1f) transform.localScale = new Vector3(1, 1, -1);
 
@@ -129,7 +130,7 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
+    //Cambia altura y centro del collider
     void SetColliderHeight(float newHeight, float centerMultiplier)
     {
         controller.height = newHeight;
@@ -157,7 +158,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             inputTimer -= Time.deltaTime;
-            //if (verticalVelocity > 0) verticalVelocity *= cutJumpHeight;
+            
 
         }
 
@@ -184,7 +185,7 @@ public class PlayerController : MonoBehaviour
         dashCooldownTimer = dashCooldown;
         animator.SetBool("IsDashing", true);
 
-        // Reducimos el collider durante el dash para pasar por huecos
+        // Reducir el collider durante el dash para pasar por huecos
         SetColliderHeight(originalHeight / 2.5f, 0.4f);
 
         float dashDirection = transform.localScale.z > 0 ? 1f : -1f;
