@@ -24,11 +24,6 @@ public class HabilityTrigger : MonoBehaviour
                     Destroy(gameObject);
                 break;
 
-                case "walljump":
-                    other.GetComponent<PlayerController>().canWallJump = true;
-                    Destroy(gameObject);
-                break;
-
                 default:
                     Debug.Log("Habilidad no asignada al trigger");
                 break;

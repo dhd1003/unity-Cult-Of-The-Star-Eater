@@ -29,7 +29,6 @@ public class PlayerController : MonoBehaviour
     [Header("Desbloqueables")]
     public bool canDash = false;
     public bool canDoubleJump = false;
-    public bool canWallJump = false;
 
     // ================================
     // COYOTE TIME & INPUT BUFFER
@@ -46,15 +45,6 @@ public class PlayerController : MonoBehaviour
     // ================================
     private bool hasDoubleJumped = false;
 
-    // ================================
-    // WALL JUMP
-    // ================================
-    [Header("Wall Jump")]
-    public float wallJumpForce = 12f;
-    public float wallJumpHorizontalForce = 8f;
-    public float wallCheckDistance = 0.6f;
-    public LayerMask wallLayer;
-    private bool isTouchingWall;
 
     // ================================
     // REFERENCIAS
@@ -81,7 +71,6 @@ public class PlayerController : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip jumpSound;
     public AudioClip doubleJumpSound;
-    public AudioClip wallJumpSound;
     public AudioClip dashSound;
     public AudioClip crouchSound;
     public AudioClip landSound;
@@ -102,10 +91,6 @@ public class PlayerController : MonoBehaviour
         // Si está en dash, ignoramos todo input
         if (isDashing) return;
 
-        // Detectar paredes para wall jump
-        isTouchingWall =
-            Physics.Raycast(transform.position, transform.right, wallCheckDistance, wallLayer) ||
-            Physics.Raycast(transform.position, -transform.right, wallCheckDistance, wallLayer);
 
         HandleCrouch();
 
@@ -219,15 +204,6 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // WALL JUMP
-        if (inputTimer > 0 && isTouchingWall && canWallJump)
-        {
-            float direction = transform.localScale.z > 0 ? -1 : 1;
-
-            moveDirection.x = direction * wallJumpHorizontalForce;
-            DoJump(wallJumpForce, wallJumpSound);
-            return;
-        }
 
         // DOBLE SALTO
         if (inputTimer > 0 && !controller.isGrounded && !hasDoubleJumped && canDoubleJump)
