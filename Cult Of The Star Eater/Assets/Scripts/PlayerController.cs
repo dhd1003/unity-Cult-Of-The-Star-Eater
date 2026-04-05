@@ -45,7 +45,6 @@ public class PlayerController : MonoBehaviour
     // ================================
     private bool hasDoubleJumped = false;
 
-
     // ================================
     // REFERENCIAS
     // ================================
@@ -88,9 +87,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Si está en dash, ignoramos todo input
         if (isDashing) return;
-
 
         HandleCrouch();
 
@@ -101,44 +98,52 @@ public class PlayerController : MonoBehaviour
 
         HandleVariableJump();
         ApplyGravity();
-
         HandleDashInput();
 
         controller.Move(moveDirection * Time.deltaTime);
 
-        // Teletransporte debug
         if (Input.GetButtonDown("Fire2"))
             TeleportToStart();
     }
 
     // ================================
-    // MOVIMIENTO HORIZONTAL
+    // MOVIMIENTO HORIZONTAL (Modificado)
     // ================================
     void HandleAnalogMovement()
     {
         float horizontal = Input.GetAxis("Horizontal");
+        float inputIntensity = Mathf.Abs(horizontal); // Valor entre 0 y 1
+
         moveDirection.x = horizontal * moveSpeed;
 
         // Girar sprite según dirección
         if (horizontal > 0.1f) transform.localScale = new Vector3(1, 1, 1);
         else if (horizontal < -0.1f) transform.localScale = new Vector3(1, 1, -1);
 
-        animator.SetBool("IsWalking", Mathf.Abs(horizontal) > 0.1f);
+        bool isWalking = inputIntensity > 0.1f;
+        animator.SetBool("IsWalking", isWalking);
+
+        if (isWalking)
+        {
+            // Mapeamos el input (0.1 a 1.0) al rango de velocidad (0.5 a 1.0)
+            float animSpeed = Mathf.Lerp(0.5f, 1.0f, inputIntensity);
+            animator.SetFloat("WalkSpeedMultiplier", animSpeed);
+        }
     }
 
     void StopHorizontalMovement()
     {
         moveDirection.x = 0;
         animator.SetBool("IsWalking", false);
+        // Opcional: devolvemos la velocidad a 1 al estar parados
+        animator.SetFloat("WalkSpeedMultiplier", 1.0f);
     }
 
-    // ================================
-    // AGACHARSE
-    // ================================
+    // [Resto de funciones: HandleCrouch, SetColliderHeight, HandleVariableJump, etc., se mantienen igual que tu código original]
+
     void HandleCrouch()
     {
         float verticalInput = Input.GetAxis("Vertical");
-
         bool wantsToCrouch = verticalInput < -0.5f && controller.isGrounded;
 
         if (wantsToCrouch && !isCrouched)
@@ -159,16 +164,9 @@ public class PlayerController : MonoBehaviour
     void SetColliderHeight(float newHeight, float centerMultiplier)
     {
         controller.height = newHeight;
-        controller.center = new Vector3(
-            originalCenter.x,
-            originalCenter.y * centerMultiplier,
-            originalCenter.z
-        );
+        controller.center = new Vector3(originalCenter.x, originalCenter.y * centerMultiplier, originalCenter.z);
     }
 
-    // ================================
-    // SALTO + COYOTE + DOBLE SALTO + WALL JUMP
-    // ================================
     void HandleVariableJump()
     {
         if (controller.isGrounded)
@@ -176,41 +174,27 @@ public class PlayerController : MonoBehaviour
             coyoteTimer = coyoteTime;
             hasDoubleJumped = false;
             animator.SetBool("IsJumping", false);
-
-            if (verticalVelocity < -5f)
-                audioSource.PlayOneShot(landSound);
+            if (verticalVelocity < -5f) audioSource.PlayOneShot(landSound);
         }
         else
         {
             coyoteTimer -= Time.deltaTime;
-
-            if (Input.GetButtonUp("Jump") && verticalVelocity > 0)
-                verticalVelocity *= cutJumpHeight;
-
-            if (verticalVelocity < -1f)
-                animator.SetBool("IsJumping", true);
+            if (Input.GetButtonUp("Jump") && verticalVelocity > 0) verticalVelocity *= cutJumpHeight;
+            if (verticalVelocity < -1f) animator.SetBool("IsJumping", true);
         }
 
-        if (Input.GetButtonDown("Jump"))
-            inputTimer = inputBuffer;
-        else
-            inputTimer -= Time.deltaTime;
+        if (Input.GetButtonDown("Jump")) inputTimer = inputBuffer;
+        else inputTimer -= Time.deltaTime;
 
-        // SALTO NORMAL
         if (inputTimer > 0 && coyoteTimer > 0 && !isCrouched)
         {
             DoJump(jumpForce, jumpSound);
             coyoteTimer = 0;
-            return;
         }
-
-
-        // DOBLE SALTO
-        if (inputTimer > 0 && !controller.isGrounded && !hasDoubleJumped && canDoubleJump)
+        else if (inputTimer > 0 && !controller.isGrounded && !hasDoubleJumped && canDoubleJump)
         {
             hasDoubleJumped = true;
             DoJump(jumpForce, doubleJumpSound);
-            return;
         }
     }
 
@@ -222,45 +206,29 @@ public class PlayerController : MonoBehaviour
         inputTimer = 0;
     }
 
-    // ================================
-    // GRAVEDAD
-    // ================================
     void ApplyGravity()
     {
-        if (controller.isGrounded && verticalVelocity < 0)
-            verticalVelocity = -2f;
-        else
-            verticalVelocity -= gravity * Time.deltaTime;
-
+        if (controller.isGrounded && verticalVelocity < 0) verticalVelocity = -2f;
+        else verticalVelocity -= gravity * Time.deltaTime;
         moveDirection.y = verticalVelocity;
     }
 
-    // ================================
-    // DASH
-    // ================================
     void HandleDashInput()
     {
         bool dashInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("R2");
-
         if (controller.isGrounded && !isCrouched && dashInput && dashCooldownTimer <= 0 && canDash)
-        {
             StartCoroutine(DashRoutine());
-        }
 
-        if (dashCooldownTimer > 0)
-            dashCooldownTimer -= Time.deltaTime;
+        if (dashCooldownTimer > 0) dashCooldownTimer -= Time.deltaTime;
     }
 
     IEnumerator DashRoutine()
     {
         isDashing = true;
         dashCooldownTimer = dashCooldown;
-
         animator.SetBool("IsDashing", true);
         audioSource.PlayOneShot(dashSound);
-
         SetColliderHeight(originalHeight / 2.5f, 0.4f);
-
         float direction = transform.localScale.z > 0 ? 1f : -1f;
         float startTime = Time.time;
 
@@ -275,9 +243,6 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
     }
 
-    // ================================
-    // DEBUG: TELETRANSPORTE
-    // ================================
     public void TeleportToStart()
     {
         controller.enabled = false;
