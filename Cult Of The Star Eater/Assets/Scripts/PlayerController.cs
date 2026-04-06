@@ -1,49 +1,41 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    // ================================
-    // CONFIGURACIÓN DE MOVIMIENTO
-    // ================================
+    //Input System
+    private PlayerInput playerInput;
+    private InputAction moveAction;
+    private InputAction jumpAction;
+    private InputAction dashAction;
+    private InputAction crouchAction;
+    private InputAction teleportAction;
+
     [Header("Movimiento")]
     public float moveSpeed = 6f;
     public float gravity = 25f;
     public float jumpForce = 12f;
     [Range(0, 1)] public float cutJumpHeight = 0.5f;
 
-    // ================================
-    // CONFIGURACIÓN DE DASH
-    // ================================
     [Header("Dash")]
-    public float dashSpeed = 15f; // Aumentado para que se note el impulso
+    public float dashSpeed = 15f;
     public float dashDuration = 0.3f;
     public float dashCooldown = 0.7f;
 
     private bool isDashing = false;
     private float dashCooldownTimer = 0f;
 
-
-    // ================================
-    // DESBLOQUEABLES
-    // ================================
     [Header("Desbloqueables")]
     public bool canDash = false;
     public bool canDoubleJump = false;
 
-    // ================================
-    // COYOTE TIME & INPUT BUFFER
-    // ================================
     [Header("Coyote Time & Input Buffer")]
     public float coyoteTime = 0.2f;
     private float coyoteTimer;
-
     public float inputBuffer = 0.15f;
     private float inputTimer;
 
-    // ================================
-    // ESTADOS Y REFERENCIAS
-    // ================================
     private bool hasDoubleJumped = false;
     private CharacterController controller;
     private Animator animator;
@@ -64,6 +56,23 @@ public class PlayerController : MonoBehaviour
     public AudioClip landSound;
 
 
+    [Header("Colliders")]
+    public GameObject EdgeChecker;
+    public GameObject WallChecker;
+
+
+    void Awake()
+    {
+        // Inicializamos las referencias del Input System
+        playerInput = GetComponent<PlayerInput>();
+        // "Player" es el nombre del Action Map en tu imagen
+        moveAction = playerInput.actions["Move"];
+        jumpAction = playerInput.actions["Jump"];
+        dashAction = playerInput.actions["Dash"];
+        crouchAction = playerInput.actions["Crouch"];
+        teleportAction = playerInput.actions["Teleport"];
+    }
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -78,26 +87,28 @@ public class PlayerController : MonoBehaviour
         if (isDashing) return;
 
         HandleCrouch();
-        HandleDashInput(); // Dash puede interrumpir el agachado
+        HandleDashInput();
 
-     
         if (!isCrouched)
-         HandleAnalogMovement();
+            HandleAnalogMovement();
         else
-         StopHorizontalMovement();
-        
+            StopHorizontalMovement();
+
         HandleVariableJump();
         ApplyGravity();
 
         controller.Move(moveDirection * Time.deltaTime);
 
-        if (Input.GetButtonDown("Fire2"))
+        // Uso de la acción Teleport
+        if (teleportAction.WasPressedThisFrame())
             TeleportToStart();
     }
 
     void HandleAnalogMovement()
     {
-        float horizontal = Input.GetAxis("Horizontal");
+        // Leemos el Vector2 del Stick o D-Pad configurado en Move
+        Vector2 inputVector = moveAction.ReadValue<Vector2>();
+        float horizontal = inputVector.x;
         float inputIntensity = Mathf.Abs(horizontal);
 
         moveDirection.x = horizontal * moveSpeed;
@@ -124,9 +135,12 @@ public class PlayerController : MonoBehaviour
 
     void HandleCrouch()
     {
-        float verticalInput = Input.GetAxis("Vertical");
-        // Solo permite agacharse si está en el suelo y no haciendo dash
-        bool wantsToCrouch = verticalInput < -0.5f && controller.isGrounded;
+        // En tu imagen, Crouch es "Left Stick Down", lo que devuelve un valor negativo en Y
+        // O si lo configuraste como botón, simplemente checkeas si está presionado
+        Vector2 inputVector = moveAction.ReadValue<Vector2>();
+
+        // Opción A: Si usas la acción Crouch específica de tu imagen (Left Stick Down)
+        bool wantsToCrouch = crouchAction.IsPressed() && controller.isGrounded;
 
         if (wantsToCrouch && !isCrouched)
         {
@@ -154,7 +168,7 @@ public class PlayerController : MonoBehaviour
         controller.center = new Vector3(originalCenter.x, originalCenter.y * centerMultiplier, originalCenter.z);
     }
 
-    void HandleVariableJump()
+    public void HandleVariableJump()
     {
         if (controller.isGrounded)
         {
@@ -166,23 +180,23 @@ public class PlayerController : MonoBehaviour
         else
         {
             coyoteTimer -= Time.deltaTime;
-            if (Input.GetButtonUp("Jump") && verticalVelocity > 0) verticalVelocity *= cutJumpHeight;
+            // Salto variable al soltar el botón
+            if (jumpAction.WasReleasedThisFrame() && verticalVelocity > 0)
+                verticalVelocity *= cutJumpHeight;
+
             if (verticalVelocity < -1f) animator.SetBool("IsJumping", true);
         }
 
-        if (Input.GetButtonDown("Jump")) inputTimer = inputBuffer;
+        if (jumpAction.WasPressedThisFrame()) inputTimer = inputBuffer;
         else inputTimer -= Time.deltaTime;
 
-        // SALTO NORMAL O EN PARED
         if (inputTimer > 0)
         {
-            // Prioridad 1: Salto NORMAL
             if (coyoteTimer > 0 && !isCrouched)
             {
                 DoJump(jumpForce, jumpSound);
                 coyoteTimer = 0;
             }
-            // Prioridad 2: Doble Salto
             else if (!controller.isGrounded && !hasDoubleJumped && canDoubleJump)
             {
                 hasDoubleJumped = true;
@@ -207,15 +221,11 @@ public class PlayerController : MonoBehaviour
         moveDirection.y = verticalVelocity;
     }
 
-    void HandleDashInput()
+    public void HandleDashInput()
     {
-        bool dashInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("R2");
-
-        if (dashInput && dashCooldownTimer <= 0 && canDash && controller.isGrounded)
+        // En tu imagen, Dash es "Right Trigger"
+        if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0 && canDash && controller.isGrounded)
         {
-            // Si estamos agachados, cancelamos el estado para poder movernos
-            //if (isCrouched) ExitCrouch();
-
             StartCoroutine(DashRoutine());
         }
 
@@ -229,7 +239,6 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("IsDashing", true);
         if (dashSound) audioSource.PlayOneShot(dashSound);
 
-        // El Dash siempre usa collider bajo (como un deslizamiento)
         SetColliderHeight(originalHeight / 2.5f, 0.4f);
 
         float direction = transform.localScale.z > 0 ? 1f : -1f;
@@ -237,12 +246,10 @@ public class PlayerController : MonoBehaviour
 
         while (Time.time < startTime + dashDuration)
         {
-            // Movimiento puramente horizontal durante el Dash
             controller.Move(new Vector3(direction * dashSpeed, 0, 0) * Time.deltaTime);
             yield return null;
         }
 
-        // Recuperar altura si no hay techo (simplificado)
         SetColliderHeight(originalHeight, 1f);
         animator.SetBool("IsDashing", false);
         isDashing = false;
