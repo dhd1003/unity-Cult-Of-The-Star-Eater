@@ -16,12 +16,13 @@ public class PlayerController : MonoBehaviour
     // CONFIGURACIÓN DE DASH
     // ================================
     [Header("Dash")]
-    public float dashSpeed = 8f;
+    public float dashSpeed = 15f; // Aumentado para que se note el impulso
     public float dashDuration = 0.3f;
     public float dashCooldown = 0.7f;
 
     private bool isDashing = false;
     private float dashCooldownTimer = 0f;
+
 
     // ================================
     // DESBLOQUEABLES
@@ -41,31 +42,19 @@ public class PlayerController : MonoBehaviour
     private float inputTimer;
 
     // ================================
-    // DOBLE SALTO
+    // ESTADOS Y REFERENCIAS
     // ================================
     private bool hasDoubleJumped = false;
-
-    // ================================
-    // REFERENCIAS
-    // ================================
     private CharacterController controller;
     private Animator animator;
-
     private Vector3 moveDirection;
     private float verticalVelocity;
-
     private Vector3 startingPoint;
 
-    // ================================
-    // COLLIDER & ESTADOS
-    // ================================
     private float originalHeight;
     private Vector3 originalCenter;
     private bool isCrouched = false;
 
-    // ================================
-    // SONIDOS
-    // ================================
     [Header("Sonidos")]
     public AudioSource audioSource;
     public AudioClip jumpSound;
@@ -74,13 +63,12 @@ public class PlayerController : MonoBehaviour
     public AudioClip crouchSound;
     public AudioClip landSound;
 
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
-
         startingPoint = transform.position;
-
         originalHeight = controller.height;
         originalCenter = controller.center;
     }
@@ -90,15 +78,16 @@ public class PlayerController : MonoBehaviour
         if (isDashing) return;
 
         HandleCrouch();
+        HandleDashInput(); // Dash puede interrumpir el agachado
 
+     
         if (!isCrouched)
-            HandleAnalogMovement();
+         HandleAnalogMovement();
         else
-            StopHorizontalMovement();
-
+         StopHorizontalMovement();
+        
         HandleVariableJump();
         ApplyGravity();
-        HandleDashInput();
 
         controller.Move(moveDirection * Time.deltaTime);
 
@@ -106,17 +95,13 @@ public class PlayerController : MonoBehaviour
             TeleportToStart();
     }
 
-    // ================================
-    // MOVIMIENTO HORIZONTAL (Modificado)
-    // ================================
     void HandleAnalogMovement()
     {
         float horizontal = Input.GetAxis("Horizontal");
-        float inputIntensity = Mathf.Abs(horizontal); // Valor entre 0 y 1
+        float inputIntensity = Mathf.Abs(horizontal);
 
         moveDirection.x = horizontal * moveSpeed;
 
-        // Girar sprite según dirección
         if (horizontal > 0.1f) transform.localScale = new Vector3(1, 1, 1);
         else if (horizontal < -0.1f) transform.localScale = new Vector3(1, 1, -1);
 
@@ -125,7 +110,6 @@ public class PlayerController : MonoBehaviour
 
         if (isWalking)
         {
-            // Mapeamos el input (0.1 a 1.0) al rango de velocidad (0.5 a 1.0)
             float animSpeed = Mathf.Lerp(0.5f, 1.0f, inputIntensity);
             animator.SetFloat("WalkSpeedMultiplier", animSpeed);
         }
@@ -135,15 +119,13 @@ public class PlayerController : MonoBehaviour
     {
         moveDirection.x = 0;
         animator.SetBool("IsWalking", false);
-        // Opcional: devolvemos la velocidad a 1 al estar parados
         animator.SetFloat("WalkSpeedMultiplier", 1.0f);
     }
-
-    // [Resto de funciones: HandleCrouch, SetColliderHeight, HandleVariableJump, etc., se mantienen igual que tu código original]
 
     void HandleCrouch()
     {
         float verticalInput = Input.GetAxis("Vertical");
+        // Solo permite agacharse si está en el suelo y no haciendo dash
         bool wantsToCrouch = verticalInput < -0.5f && controller.isGrounded;
 
         if (wantsToCrouch && !isCrouched)
@@ -151,14 +133,19 @@ public class PlayerController : MonoBehaviour
             isCrouched = true;
             animator.SetBool("IsCrouched", true);
             SetColliderHeight(originalHeight / 2.5f, 0.4f);
-            audioSource.PlayOneShot(crouchSound);
+            if (crouchSound) audioSource.PlayOneShot(crouchSound);
         }
         else if (!wantsToCrouch && isCrouched)
         {
-            isCrouched = false;
-            animator.SetBool("IsCrouched", false);
-            SetColliderHeight(originalHeight, 1f);
+            ExitCrouch();
         }
+    }
+
+    void ExitCrouch()
+    {
+        isCrouched = false;
+        animator.SetBool("IsCrouched", false);
+        SetColliderHeight(originalHeight, 1f);
     }
 
     void SetColliderHeight(float newHeight, float centerMultiplier)
@@ -174,7 +161,7 @@ public class PlayerController : MonoBehaviour
             coyoteTimer = coyoteTime;
             hasDoubleJumped = false;
             animator.SetBool("IsJumping", false);
-            if (verticalVelocity < -5f) audioSource.PlayOneShot(landSound);
+            if (verticalVelocity < -5f && landSound) audioSource.PlayOneShot(landSound);
         }
         else
         {
@@ -186,23 +173,30 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump")) inputTimer = inputBuffer;
         else inputTimer -= Time.deltaTime;
 
-        if (inputTimer > 0 && coyoteTimer > 0 && !isCrouched)
+        // SALTO NORMAL O EN PARED
+        if (inputTimer > 0)
         {
-            DoJump(jumpForce, jumpSound);
-            coyoteTimer = 0;
-        }
-        else if (inputTimer > 0 && !controller.isGrounded && !hasDoubleJumped && canDoubleJump)
-        {
-            hasDoubleJumped = true;
-            DoJump(jumpForce, doubleJumpSound);
+            // Prioridad 1: Salto NORMAL
+            if (coyoteTimer > 0 && !isCrouched)
+            {
+                DoJump(jumpForce, jumpSound);
+                coyoteTimer = 0;
+            }
+            // Prioridad 2: Doble Salto
+            else if (!controller.isGrounded && !hasDoubleJumped && canDoubleJump)
+            {
+                hasDoubleJumped = true;
+                DoJump(jumpForce, doubleJumpSound);
+            }
         }
     }
 
     void DoJump(float force, AudioClip sound)
     {
         verticalVelocity = force;
+        moveDirection.y = verticalVelocity;
         animator.SetBool("IsJumping", true);
-        audioSource.PlayOneShot(sound);
+        if (sound) audioSource.PlayOneShot(sound);
         inputTimer = 0;
     }
 
@@ -216,8 +210,14 @@ public class PlayerController : MonoBehaviour
     void HandleDashInput()
     {
         bool dashInput = Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("R2");
-        if (controller.isGrounded && !isCrouched && dashInput && dashCooldownTimer <= 0 && canDash)
+
+        if (dashInput && dashCooldownTimer <= 0 && canDash && controller.isGrounded)
+        {
+            // Si estamos agachados, cancelamos el estado para poder movernos
+            //if (isCrouched) ExitCrouch();
+
             StartCoroutine(DashRoutine());
+        }
 
         if (dashCooldownTimer > 0) dashCooldownTimer -= Time.deltaTime;
     }
@@ -227,17 +227,22 @@ public class PlayerController : MonoBehaviour
         isDashing = true;
         dashCooldownTimer = dashCooldown;
         animator.SetBool("IsDashing", true);
-        audioSource.PlayOneShot(dashSound);
+        if (dashSound) audioSource.PlayOneShot(dashSound);
+
+        // El Dash siempre usa collider bajo (como un deslizamiento)
         SetColliderHeight(originalHeight / 2.5f, 0.4f);
+
         float direction = transform.localScale.z > 0 ? 1f : -1f;
         float startTime = Time.time;
 
         while (Time.time < startTime + dashDuration)
         {
+            // Movimiento puramente horizontal durante el Dash
             controller.Move(new Vector3(direction * dashSpeed, 0, 0) * Time.deltaTime);
             yield return null;
         }
 
+        // Recuperar altura si no hay techo (simplificado)
         SetColliderHeight(originalHeight, 1f);
         animator.SetBool("IsDashing", false);
         isDashing = false;
