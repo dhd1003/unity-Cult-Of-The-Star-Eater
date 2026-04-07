@@ -61,6 +61,13 @@ public class PlayerController : MonoBehaviour
     public GameObject WallChecker;
 
 
+    private CollisionChecker collisionChecker;
+
+    private bool wallCollision;
+    private bool canClimb;
+
+
+
     void Awake()
     {
         // Inicializamos las referencias del Input System
@@ -71,15 +78,19 @@ public class PlayerController : MonoBehaviour
         dashAction = playerInput.actions["Dash"];
         crouchAction = playerInput.actions["Crouch"];
         teleportAction = playerInput.actions["Teleport"];
+        
     }
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        collisionChecker = GetComponent<CollisionChecker>();
         startingPoint = transform.position;
         originalHeight = controller.height;
         originalCenter = controller.center;
+
+        
     }
 
     void Update()
@@ -98,6 +109,34 @@ public class PlayerController : MonoBehaviour
         ApplyGravity();
 
         controller.Move(moveDirection * Time.deltaTime);
+
+        wallCollision = collisionChecker.wallCollision;
+        canClimb = collisionChecker.CanClimb;
+
+
+        //if (wallCollision && canClimb)
+        //{
+        //    StopHorizontalMovement();
+        //    animator.SetBool("IsHanging", true);
+        //    Vector2 inputVector = moveAction.ReadValue<Vector2>();
+        //    if (inputVector.y > 0 )
+        //    {
+        //        animator.SetBool("IsHanging", false);
+        //        animator.SetBool("canClimb", true);
+        //        controller.transform.position = controller.transform.position+ new Vector3(1,2,0);
+        //        HandleAnalogMovement();
+        //    }
+        //    else if (inputVector.y < 0)
+        //    {
+        //        animator.SetBool("IsHanging", false);
+        //        HandleAnalogMovement();
+        //    }
+        //}
+        //else
+        //{
+        //    HandleAnalogMovement();
+        //    animator.SetBool("IsHanging", false);
+        //}
 
         // Uso de la acción Teleport
         if (teleportAction.WasPressedThisFrame())
@@ -135,11 +174,8 @@ public class PlayerController : MonoBehaviour
 
     void HandleCrouch()
     {
-        // En tu imagen, Crouch es "Left Stick Down", lo que devuelve un valor negativo en Y
-        // O si lo configuraste como botón, simplemente checkeas si está presionado
-        Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-        // Opción A: Si usas la acción Crouch específica de tu imagen (Left Stick Down)
+        Vector2 inputVector = moveAction.ReadValue<Vector2>();
         bool wantsToCrouch = crouchAction.IsPressed() && controller.isGrounded;
 
         if (wantsToCrouch && !isCrouched)
