@@ -57,14 +57,10 @@ public class PlayerController : MonoBehaviour
 
 
     [Header("Colliders")]
-    public GameObject EdgeChecker;
-    public GameObject WallChecker;
-
-
     private CollisionChecker collisionChecker;
-
     private bool wallCollision;
     private bool canClimb;
+
 
 
 
@@ -72,7 +68,7 @@ public class PlayerController : MonoBehaviour
     {
         // Inicializamos las referencias del Input System
         playerInput = GetComponent<PlayerInput>();
-        // "Player" es el nombre del Action Map en tu imagen
+        
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         dashAction = playerInput.actions["Dash"];
@@ -145,7 +141,7 @@ public class PlayerController : MonoBehaviour
 
     void HandleAnalogMovement()
     {
-        // Leemos el Vector2 del Stick o D-Pad configurado en Move
+        // Leer el Vector2 del Stick o D-Pad configurado en Move
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
         float horizontal = inputVector.x;
         float inputIntensity = Mathf.Abs(horizontal);
@@ -259,7 +255,7 @@ public class PlayerController : MonoBehaviour
 
     public void HandleDashInput()
     {
-        // En tu imagen, Dash es "Right Trigger"
+        // Dash es "Right Trigger"
         if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0 && canDash && controller.isGrounded)
         {
             StartCoroutine(DashRoutine());
