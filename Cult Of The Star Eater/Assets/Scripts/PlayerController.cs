@@ -61,6 +61,7 @@ public class PlayerController : MonoBehaviour
     private bool wallCollision;
     private bool canClimb;
 
+    private bool isClimbing = false; // Para evitar que la corrutina se dispare mil veces
 
 
 
@@ -91,52 +92,101 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDashing) return;
-
-        HandleCrouch();
-        HandleDashInput();
-
-        if (!isCrouched)
-            HandleAnalogMovement();
-        else
-            StopHorizontalMovement();
-
-        HandleVariableJump();
-        ApplyGravity();
-
-        controller.Move(moveDirection * Time.deltaTime);
+        if (isDashing || isClimbing) return; // Si está escalando, Update no hace NADA
 
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
 
+        // Solo activamos colgado si NO estamos en el suelo y hay pared
+        bool beingHanging = wallCollision && canClimb && !controller.isGrounded;
+        animator.SetBool("IsHanging", beingHanging);
 
-        //if (wallCollision && canClimb)
-        //{
-        //    StopHorizontalMovement();
-        //    animator.SetBool("IsHanging", true);
-        //    Vector2 inputVector = moveAction.ReadValue<Vector2>();
-        //    if (inputVector.y > 0 )
-        //    {
-        //        animator.SetBool("IsHanging", false);
-        //        animator.SetBool("canClimb", true);
-        //        controller.transform.position = controller.transform.position+ new Vector3(1,2,0);
-        //        HandleAnalogMovement();
-        //    }
-        //    else if (inputVector.y < 0)
-        //    {
-        //        animator.SetBool("IsHanging", false);
-        //        HandleAnalogMovement();
-        //    }
-        //}
-        //else
-        //{
-        //    HandleAnalogMovement();
-        //    animator.SetBool("IsHanging", false);
-        //}
+        if (beingHanging)
+        {
+            // Congelamos el movimiento
+            verticalVelocity = 0;
+            moveDirection = Vector3.zero;
 
-        // Uso de la acción Teleport
-        if (teleportAction.WasPressedThisFrame())
-            TeleportToStart();
+            Vector2 inputVector = moveAction.ReadValue<Vector2>();
+            if (inputVector.y > 0)
+            {
+                StartCoroutine(ClimbRoutine());
+            }
+            else if (inputVector.y < 0)
+            {
+                // Si pulsa abajo, forzamos la salida
+                animator.SetBool("IsHanging", false);
+                verticalVelocity = -5f; // Pequeño impulso para despegarse
+            }
+
+            // Aplicamos el freno para que no caiga
+            controller.Move(moveDirection * Time.deltaTime);
+        }
+        else
+        {
+            // TODO EL RESTO DEL MOVIMIENTO (Jump, Gravity, Analog, etc.)
+            HandleCrouch();
+            HandleDashInput();
+            if (!isCrouched) HandleAnalogMovement();
+            else StopHorizontalMovement();
+            HandleVariableJump();
+            ApplyGravity();
+
+            controller.Move(moveDirection * Time.deltaTime);
+        }
+
+        if (teleportAction.WasPressedThisFrame()) TeleportToStart();
+    }
+
+    // He extraído esto a un método para que tu Update sea legible
+    void HandleHangingState()
+    {
+        StopHorizontalMovement();
+
+        // Anulamos velocidad vertical para que no caiga por gravedad
+        verticalVelocity = 0;
+        moveDirection.y = 0;
+
+        animator.SetBool("IsHanging", true);
+
+        Vector2 inputVector = moveAction.ReadValue<Vector2>();
+
+        // Iniciar escalada hacia arriba
+        if (inputVector.y > 0 && !isClimbing)
+        {
+            StartCoroutine(ClimbRoutine());
+        }
+        // Soltarse de la pared hacia abajo
+        else if (inputVector.y < 0)
+        {
+            animator.SetBool("IsHanging", false);
+            // Le damos un pequeño empujón hacia abajo para que se separe de la pared
+            verticalVelocity = -2f;
+        }
+    }
+
+
+
+    IEnumerator ClimbRoutine()
+    {
+        isClimbing = true;
+        animator.SetBool("canClimb", true);
+        animator.SetBool("IsHanging", false);
+        yield return null;
+        // Ya no necesitas esperar segundos aquí, 
+        // porque el "Event" de la animación hará el trabajo.
+    }
+
+    // Esta función la llamará la animación directamente
+    public void FinishClimbMovement()
+    {
+        controller.enabled = false;
+        float direction = transform.localScale.z > 0 ? 1f : -1f;
+        transform.position += new Vector3(direction * 1f, 2f, 0);
+        controller.enabled = true;
+
+        animator.SetBool("canClimb", false);
+        isClimbing = false; // Liberamos el control
     }
 
     void HandleAnalogMovement()
