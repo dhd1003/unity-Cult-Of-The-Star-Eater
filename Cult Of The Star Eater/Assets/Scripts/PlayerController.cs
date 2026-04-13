@@ -92,43 +92,53 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDashing || isClimbing) return; // Si está escalando, Update no hace NADA
+        // 1. Salida rápida si estamos en medio de una acción bloqueante
+        if (isDashing || isClimbing) return;
 
+        // 2. Actualizar sensores
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
+        Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-        // Solo activamos colgado si NO estamos en el suelo y hay pared
+        // 3. CONDICIÓN CRÍTICA: 
+        // Solo puede colgarse si: Toca pared + Puede escalar + NO está en el suelo
         bool beingHanging = wallCollision && canClimb && !controller.isGrounded;
+
+        // 4. Interrupción manual: Si pulsa abajo, soltamos la pared
+        if (beingHanging && inputVector.y < -0.1f)
+        {
+            beingHanging = false;
+            verticalVelocity = -2f;
+        }
+
+        // 5. Aplicar estado al Animator
         animator.SetBool("IsHanging", beingHanging);
 
         if (beingHanging)
         {
-            // Congelamos el movimiento
+            // ESTADO: COLGADO
             verticalVelocity = 0;
             moveDirection = Vector3.zero;
 
-            Vector2 inputVector = moveAction.ReadValue<Vector2>();
-            if (inputVector.y > 0)
+            if (inputVector.y > 0.1f)
             {
                 StartCoroutine(ClimbRoutine());
             }
-            else if (inputVector.y < 0)
-            {
-                // Si pulsa abajo, forzamos la salida
-                animator.SetBool("IsHanging", false);
-                verticalVelocity = -5f; // Pequeño impulso para despegarse
-            }
 
-            // Aplicamos el freno para que no caiga
+            // Mantenemos al personaje quieto en la pared
             controller.Move(moveDirection * Time.deltaTime);
         }
         else
         {
-            // TODO EL RESTO DEL MOVIMIENTO (Jump, Gravity, Analog, etc.)
+            // ESTADO: MOVIMIENTO NORMAL / CAÍDA
             HandleCrouch();
             HandleDashInput();
-            if (!isCrouched) HandleAnalogMovement();
-            else StopHorizontalMovement();
+
+            if (!isCrouched)
+                HandleAnalogMovement();
+            else
+                StopHorizontalMovement();
+
             HandleVariableJump();
             ApplyGravity();
 
