@@ -60,9 +60,10 @@ public class PlayerController : MonoBehaviour
     private CollisionChecker collisionChecker;
     private bool wallCollision;
     private bool canClimb;
+    private bool isGroundNear;
 
     private bool isClimbing = false; // Para evitar que la corrutina se dispare mil veces
-
+    [SerializeField] private Vector3 climbVector = new Vector3(1f, 1.9f, 0);
 
 
     void Awake()
@@ -92,41 +93,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 1. Salida rápida si estamos en medio de una acción bloqueante
         if (isDashing || isClimbing) return;
 
-        // 2. Actualizar sensores
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
+        isGroundNear=collisionChecker.isGroundNear;
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-        // 3. CONDICIÓN CRÍTICA: 
-        // Solo puede colgarse si: Toca pared + Puede escalar + NO está en el suelo
-        bool beingHanging = wallCollision && canClimb && !controller.isGrounded;
+        // Solo colgamos si tocamos pared Y hay un borde arriba (canClimb)
+        bool beingHanging = wallCollision && canClimb && !isGroundNear;
 
-        // 4. Interrupción manual: Si pulsa abajo, soltamos la pared
-        if (beingHanging && inputVector.y < -0.1f)
+        // Si el usuario presiona ABAJO o si de pronto toca el suelo, soltamos
+        if (inputVector.y < -0.1f || controller.isGrounded)
         {
             beingHanging = false;
-            verticalVelocity = -2f;
         }
 
-        // 5. Aplicar estado al Animator
         animator.SetBool("IsHanging", beingHanging);
 
         if (beingHanging)
         {
-            // ESTADO: COLGADO
             verticalVelocity = 0;
             moveDirection = Vector3.zero;
 
+            // Si presiona ARRIBA, disparamos la corrutina Y BLOQUEAMOS el resto
             if (inputVector.y > 0.1f)
             {
                 StartCoroutine(ClimbRoutine());
+                return; // Salimos del Update para que no ejecute Move() abajo
             }
 
-            // Mantenemos al personaje quieto en la pared
-            controller.Move(moveDirection * Time.deltaTime);
+            // Mantener posición en la pared
+            controller.Move(Vector3.zero);
         }
         else
         {
@@ -148,7 +146,7 @@ public class PlayerController : MonoBehaviour
         if (teleportAction.WasPressedThisFrame()) TeleportToStart();
     }
 
-    // He extraído esto a un método para que tu Update sea legible
+    
     void HandleHangingState()
     {
         StopHorizontalMovement();
@@ -192,7 +190,7 @@ public class PlayerController : MonoBehaviour
     {
         controller.enabled = false;
         float direction = transform.localScale.z > 0 ? 1f : -1f;
-        transform.position += new Vector3(direction * 1f, 2f, 0);
+        transform.position += new Vector3(direction * climbVector.x, climbVector.y, 0);
         controller.enabled = true;
 
         animator.SetBool("canClimb", false);

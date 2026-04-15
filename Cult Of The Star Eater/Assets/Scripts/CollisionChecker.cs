@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class CollisionChecker : MonoBehaviour
 {
 
     public LayerMask Ground;
     public float rayCastDistance = 1f;
+    public float rayCastGroundDistance = 2f;
     private Vector3 originPointWall;
     private Vector3 originPointClimb;
     public Vector3 offset;
@@ -18,6 +20,7 @@ public class CollisionChecker : MonoBehaviour
 
     public bool wallCollision;
     public bool CanClimb;
+    public bool isGroundNear;
 
 
     // Start is called before the first frame update
@@ -34,16 +37,7 @@ public class CollisionChecker : MonoBehaviour
     {
 
         ////RayCast Wall
-
-        if (controller.transform.localScale.z == -1)
-        {
-            direction = originalDirection*-1;
-        }
-        else
-        {
-            direction = originalDirection;
-
-        }
+        direction = (transform.localScale.z < 0) ? originalDirection * -1 : originalDirection;
 
         originPointWall = transform.position + offset;
         RaycastHit hitr;
@@ -80,6 +74,19 @@ public class CollisionChecker : MonoBehaviour
             Debug.DrawRay(originPointClimb, direction * rayCastDistance, Color.magenta);
             CanClimb = true;
             
+        }
+
+        //RayCast isGroundNear
+        RaycastHit groundHit;
+        if(Physics.Raycast(transform.position, Vector3.down, out groundHit, rayCastGroundDistance, Ground))
+        {
+            Debug.DrawRay(transform.position, Vector3.down * rayCastGroundDistance, Color.white);
+            isGroundNear = true;
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, Vector3.down * rayCastGroundDistance, Color.black);
+            isGroundNear = false;
         }
 
    

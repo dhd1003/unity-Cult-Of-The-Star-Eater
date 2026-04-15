@@ -3523,6 +3523,7 @@ MonoBehaviour:
   dashSound: {fileID: 8300000, guid: 28b72c6fc75896a41847847b51eae59d, type: 3}
   crouchSound: {fileID: 8300000, guid: e69ecf017f1571b4ebb9daa5f9f9afbf, type: 3}
   landSound: {fileID: 8300000, guid: 8774c5c3715ed864bb63511ca1b96476, type: 3}
+  climbVector: {x: 1, y: 2.01, z: 0}
 --- !u!114 &685504130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3624,12 +3625,14 @@ MonoBehaviour:
   Ground:
     serializedVersion: 2
     m_Bits: 8
-  rayCastDistance: 0.25
+  rayCastDistance: 0.5
+  rayCastGroundDistance: 1
   offset: {x: 0, y: 1.95, z: 0}
   originalDirection: {x: 1, y: 0, z: 0}
   aditionRayCastClimb: 0.15
   wallCollision: 0
   CanClimb: 0
+  isGroundNear: 0
 --- !u!114 &685504132
 MonoBehaviour:
   m_ObjectHideFlags: 0
