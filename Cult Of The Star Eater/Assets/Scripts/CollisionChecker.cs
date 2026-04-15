@@ -22,6 +22,8 @@ public class CollisionChecker : MonoBehaviour
     public bool CanClimb;
     public bool isGroundNear;
 
+    public Vector3 wallHitPoint;
+
 
     // Start is called before the first frame update
     void Start()
@@ -44,9 +46,11 @@ public class CollisionChecker : MonoBehaviour
         // Does the ray intersect any objects excluding the player layer
         if (Physics.Raycast(originPointWall, direction, out hitr, rayCastDistance, Ground))
         {
-            Debug.DrawRay(originPointWall, direction * rayCastDistance, Color.red);
-            wallCollision = true;
             
+            wallCollision = true;
+            wallHitPoint = hitr.point; // Guardamos el punto exacto del impacto
+            Debug.DrawRay(originPointWall, direction * rayCastDistance, Color.red);
+
         }
         else
         {

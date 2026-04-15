@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    //Input System
+    // Input System
     private PlayerInput playerInput;
     private InputAction moveAction;
     private InputAction jumpAction;
@@ -55,28 +55,25 @@ public class PlayerController : MonoBehaviour
     public AudioClip crouchSound;
     public AudioClip landSound;
 
-
     [Header("Colliders")]
     private CollisionChecker collisionChecker;
     private bool wallCollision;
     private bool canClimb;
     private bool isGroundNear;
 
-    private bool isClimbing = false; // Para evitar que la corrutina se dispare mil veces
+    private bool isClimbing = false;
+    private bool isAlreadyHanging = false; // Control para la alineación única
     [SerializeField] private Vector3 climbVector = new Vector3(1f, 1.9f, 0);
-
+    public float offsetHanging = 0.3f;
 
     void Awake()
     {
-        // Inicializamos las referencias del Input System
         playerInput = GetComponent<PlayerInput>();
-        
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         dashAction = playerInput.actions["Dash"];
         crouchAction = playerInput.actions["Crouch"];
         teleportAction = playerInput.actions["Teleport"];
-        
     }
 
     void Start()
@@ -87,8 +84,6 @@ public class PlayerController : MonoBehaviour
         startingPoint = transform.position;
         originalHeight = controller.height;
         originalCenter = controller.center;
-
-        
     }
 
     void Update()
@@ -97,41 +92,55 @@ public class PlayerController : MonoBehaviour
 
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
-        isGroundNear=collisionChecker.isGroundNear;
+        isGroundNear = collisionChecker.isGroundNear;
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-        // Solo colgamos si tocamos pared Y hay un borde arriba (canClimb)
-        bool beingHanging = wallCollision && canClimb && !isGroundNear;
+        // Lógica de detección: se mantiene si ya estábamos colgados o si el rayo detecta pared
+        bool beingHanging = (wallCollision || isAlreadyHanging) && canClimb && !isGroundNear;
 
-        // Si el usuario presiona ABAJO o si de pronto toca el suelo, soltamos
+        // Salida por suelo o input hacia abajo
         if (inputVector.y < -0.1f || controller.isGrounded)
         {
             beingHanging = false;
+            isAlreadyHanging = false;
         }
 
         animator.SetBool("IsHanging", beingHanging);
 
         if (beingHanging)
         {
-            verticalVelocity = 0;
-            moveDirection = Vector3.zero;
+            // --- ESTADO COLGADO ---
 
-            // Si presiona ARRIBA, disparamos la corrutina Y BLOQUEAMOS el resto
-            if (inputVector.y > 0.1f)
+            // Alineamos al personaje en el frame que toca la pared
+            if (!isAlreadyHanging)
             {
-                StartCoroutine(ClimbRoutine());
-                return; // Salimos del Update para que no ejecute Move() abajo
+                CorrectHangingPosition();
+                isAlreadyHanging = true;
             }
 
-            // Mantener posición en la pared
+            verticalVelocity = 0;
+            moveDirection = Vector3.zero; // Bloquea cualquier movimiento previo
+
+            // Iniciar escalada
+            if (inputVector.y > 0.1f)
+            {
+                isAlreadyHanging = false;
+                StartCoroutine(ClimbRoutine());
+                return;
+            }
+
+            // Mantiene al personaje estático en el aire
             controller.Move(Vector3.zero);
         }
         else
         {
-            // ESTADO: MOVIMIENTO NORMAL / CAÍDA
+            // --- ESTADO MOVIMIENTO NORMAL ---
+            isAlreadyHanging = false;
+
             HandleCrouch();
             HandleDashInput();
 
+            // Solo procesamos movimiento horizontal si NO estamos colgados
             if (!isCrouched)
                 HandleAnalogMovement();
             else
@@ -146,46 +155,32 @@ public class PlayerController : MonoBehaviour
         if (teleportAction.WasPressedThisFrame()) TeleportToStart();
     }
 
-    
-    void HandleHangingState()
+    private void CorrectHangingPosition()
     {
-        StopHorizontalMovement();
+        controller.enabled = false;
 
-        // Anulamos velocidad vertical para que no caiga por gravedad
-        verticalVelocity = 0;
-        moveDirection.y = 0;
+        // Dirección basada en escala (Z es tu eje de flip según el CollisionChecker)
+        float faceDir = transform.localScale.z > 0 ? 1f : -1f;
 
-        animator.SetBool("IsHanging", true);
+        // Usamos el punto de impacto exacto del Raycast para el ajuste
+        Vector3 alignedPos = collisionChecker.wallHitPoint;
+        alignedPos.x -= (offsetHanging * faceDir);
+        alignedPos.y = transform.position.y;
+        alignedPos.z = transform.position.z;
 
-        Vector2 inputVector = moveAction.ReadValue<Vector2>();
-
-        // Iniciar escalada hacia arriba
-        if (inputVector.y > 0 && !isClimbing)
-        {
-            StartCoroutine(ClimbRoutine());
-        }
-        // Soltarse de la pared hacia abajo
-        else if (inputVector.y < 0)
-        {
-            animator.SetBool("IsHanging", false);
-            // Le damos un pequeño empujón hacia abajo para que se separe de la pared
-            verticalVelocity = -2f;
-        }
+        transform.position = alignedPos;
+        controller.enabled = true;
     }
-
-
 
     IEnumerator ClimbRoutine()
     {
         isClimbing = true;
+        // La posición ya es correcta por el ajuste al colgarse
         animator.SetBool("canClimb", true);
         animator.SetBool("IsHanging", false);
         yield return null;
-        // Ya no necesitas esperar segundos aquí, 
-        // porque el "Event" de la animación hará el trabajo.
     }
 
-    // Esta función la llamará la animación directamente
     public void FinishClimbMovement()
     {
         controller.enabled = false;
@@ -194,12 +189,11 @@ public class PlayerController : MonoBehaviour
         controller.enabled = true;
 
         animator.SetBool("canClimb", false);
-        isClimbing = false; // Liberamos el control
+        isClimbing = false;
     }
 
     void HandleAnalogMovement()
     {
-        // Leer el Vector2 del Stick o D-Pad configurado en Move
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
         float horizontal = inputVector.x;
         float inputIntensity = Mathf.Abs(horizontal);
@@ -219,8 +213,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     void StopHorizontalMovement()
     {
+        Debug.Log("Dejó de moverse");
         moveDirection.x = 0;
         animator.SetBool("IsWalking", false);
         animator.SetFloat("WalkSpeedMultiplier", 1.0f);
