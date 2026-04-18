@@ -3816,7 +3816,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 685504124}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77e76e5081b454d41a1255aa0a3db53e, type: 3}
   m_Name: 
@@ -3921,6 +3921,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: d1d5091d-1693-4a6e-8b18-2535fa69e4a9
     m_ActionName: Player/Crouch[/DualSenseGamepadHID/leftStick/down]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 6fbc51d8-e054-484e-bf23-0e28e14f4128
+    m_ActionName: Player/Pray[/DualSenseGamepadHID/leftTrigger,/Mouse/rightButton]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -3950,6 +3954,111 @@ MonoBehaviour:
   CanClimb: 0
   isGroundNear: 0
   wallHitPoint: {x: 0, y: 0, z: 0}
+--- !u!114 &685504132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685504124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f62f75899bf7247a9236b1be8f5e07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerInput: {fileID: 0}
+  moveAction:
+    m_Name: Move
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 628b0cef-e907-4ea7-b648-7cf0c4ffcfec
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  jumpAction:
+    m_Name: Jump
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 0b2f1e1a-ddd8-445f-9fa6-6dabcad52377
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  dashAction:
+    m_Name: Dash
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 93dd5401-95ff-4965-a4ae-ac35284d63aa
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  crouchAction:
+    m_Name: Crouch
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 190aa756-7a3a-4281-934b-94d880a8c1a8
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  teleportAction:
+    m_Name: Teleport
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: ecfb434b-9aba-45ee-920c-d5c6065d385b
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  prayAction:
+    m_Name: Pray
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 3c2be861-4d89-4fdb-8b69-fc66ed1846c6
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  moveSpeed: 6
+  gravity: 25
+  jumpForce: 10
+  cutJumpHeight: 0.5
+  dashSpeed: 8
+  dashDuration: 0.3
+  dashCooldown: 0.7
+  isDashing: 0
+  dashCooldownTimer: 0
+  canDash: 0
+  canDoubleJump: 0
+  coyoteTime: 0.2
+  coyoteTimer: 0
+  inputBuffer: 0.15
+  inputTimer: 0
+  hasDoubleJumped: 0
+  controller: {fileID: 0}
+  animator: {fileID: 0}
+  moveDirection: {x: 0, y: 0, z: 0}
+  verticalVelocity: 0
+  startingPoint: {x: 0, y: 0, z: 0}
+  originalHeight: 0
+  originalCenter: {x: 0, y: 0, z: 0}
+  isCrouched: 0
+  audioSource: {fileID: 0}
+  jumpSound: {fileID: 0}
+  doubleJumpSound: {fileID: 0}
+  dashSound: {fileID: 0}
+  crouchSound: {fileID: 0}
+  landSound: {fileID: 0}
+  collisionChecker: {fileID: 0}
+  wallCollision: 0
+  canClimb: 0
+  isGroundNear: 0
+  isClimbing: 0
+  isAlreadyHanging: 0
+  climbVector: {x: 1, y: 1.9, z: 0}
+  offsetHanging: 0.3
 --- !u!1 &689315714
 GameObject:
   m_ObjectHideFlags: 0
@@ -6499,6 +6608,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 685504131}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 685504132}
     - targetCorrespondingSourceObject: {fileID: -3241814158722261695, guid: f680977d5938528479c9401d45f0b9ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 196477760}

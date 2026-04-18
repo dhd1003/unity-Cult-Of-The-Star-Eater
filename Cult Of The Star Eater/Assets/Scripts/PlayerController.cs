@@ -88,7 +88,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDashing || isClimbing) return;
+        if (teleportAction.WasPressedThisFrame()) TeleportToStart();
+        
+        //if (isDashing || isClimbing) return;
+        
 
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
@@ -152,7 +155,6 @@ public class PlayerController : MonoBehaviour
             controller.Move(moveDirection * Time.deltaTime);
         }
 
-        if (teleportAction.WasPressedThisFrame()) TeleportToStart();
     }
 
     private void CorrectHangingPosition()
