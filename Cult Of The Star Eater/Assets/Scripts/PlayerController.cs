@@ -1,6 +1,7 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,6 +12,12 @@ public class PlayerController : MonoBehaviour
     private InputAction dashAction;
     private InputAction crouchAction;
     private InputAction teleportAction;
+    private InputAction prayAction;
+    private InputAction northAction;
+    private InputAction southAction;
+    private InputAction eastAction;
+    private InputAction westAction;
+
 
     [Header("Movimiento")]
     public float moveSpeed = 6f;
@@ -62,9 +69,18 @@ public class PlayerController : MonoBehaviour
     private bool isGroundNear;
 
     private bool isClimbing = false;
-    private bool isAlreadyHanging = false; // Control para la alineación única
+    private bool isAlreadyHanging = false; // Control para la alineaciÃ³n Ãºnica
     [SerializeField] private Vector3 climbVector = new Vector3(1f, 1.9f, 0);
     public float offsetHanging = 0.3f;
+
+    [Header("Pray")]
+    private bool isPraying = false;
+
+    // Secuencia actual
+    private List<string> currentSequence = new List<string>();
+
+    // Secuencias vÃ¡lidas
+    private readonly List<string> correctSequence = new List<string> { "North", "East", "South", "West" };
 
     void Awake()
     {
@@ -74,6 +90,13 @@ public class PlayerController : MonoBehaviour
         dashAction = playerInput.actions["Dash"];
         crouchAction = playerInput.actions["Crouch"];
         teleportAction = playerInput.actions["Teleport"];
+        prayAction = playerInput.actions["Pray"];
+        northAction = playerInput.actions["North"];
+        southAction = playerInput.actions["South"];
+        eastAction = playerInput.actions["East"];
+        westAction = playerInput.actions["West"];
+
+
     }
 
     void Start()
@@ -84,21 +107,58 @@ public class PlayerController : MonoBehaviour
         startingPoint = transform.position;
         originalHeight = controller.height;
         originalCenter = controller.center;
+
     }
 
     void Update()
     {
+
         if (teleportAction.WasPressedThisFrame()) TeleportToStart();
-        
-        //if (isDashing || isClimbing) return;
-        
+
 
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
         isGroundNear = collisionChecker.isGroundNear;
+
+
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-        // Lógica de detección: se mantiene si ya estábamos colgados o si el rayo detecta pared
+        // Si aterriza mientras mantiene el gatillo, tambiÃ©n salimos del modo aire
+        if (controller.isGrounded && isPraying)
+        {
+            animator.SetBool("IsJumping", false);
+        }
+
+
+
+        if (isDashing || isClimbing)
+        {
+            Debug.Log("IsDashing:  " + isDashing);
+            Debug.Log("CanClimb:  " + canClimb);
+            Debug.Log("WallCollision:  " + wallCollision);
+            Debug.Log("IsGroundNear:  " + isGroundNear);
+            Debug.Log("IsClimbing:  " + isClimbing);
+            Debug.Log("Is Already Hanging:  " + isAlreadyHanging);
+  
+            return;
+        }
+
+        // --- PRAY MODE ---
+        if (prayAction.IsPressed() && controller.isGrounded && !isDashing && !isClimbing)
+        {
+            if (!isPraying)
+                EnterPrayMode();
+
+            HandlePrayInputs();
+            return;
+        }
+        else if (isPraying && !prayAction.IsPressed())
+        {
+            ExitPrayMode();
+        }
+
+
+        // LÃ³gica de detecciÃ³n: se mantiene si ya estÃ¡bamos colgados o si el rayo detecta pared
         bool beingHanging = (wallCollision || isAlreadyHanging) && canClimb && !isGroundNear;
 
         // Salida por suelo o input hacia abajo
@@ -128,11 +188,11 @@ public class PlayerController : MonoBehaviour
             if (inputVector.y > 0.1f)
             {
                 isAlreadyHanging = false;
-                StartCoroutine(ClimbRoutine());
+                ClimbRoutine();
                 return;
             }
 
-            // Mantiene al personaje estático en el aire
+            // Mantiene al personaje estÃ¡tico en el aire
             controller.Move(Vector3.zero);
         }
         else
@@ -161,7 +221,7 @@ public class PlayerController : MonoBehaviour
     {
         controller.enabled = false;
 
-        // Dirección basada en escala (Z es tu eje de flip según el CollisionChecker)
+        // DirecciÃ³n basada en escala (Z es tu eje de flip segÃºn el CollisionChecker)
         float faceDir = transform.localScale.z > 0 ? 1f : -1f;
 
         // Usamos el punto de impacto exacto del Raycast para el ajuste
@@ -174,13 +234,13 @@ public class PlayerController : MonoBehaviour
         controller.enabled = true;
     }
 
-    IEnumerator ClimbRoutine()
+    private void ClimbRoutine()
     {
         isClimbing = true;
-        // La posición ya es correcta por el ajuste al colgarse
+        // La posiciÃ³n ya es correcta por el ajuste al colgarse
         animator.SetBool("canClimb", true);
-        animator.SetBool("IsHanging", false);
-        yield return null;
+        animator.SetBool("IsHanging", true);
+        
     }
 
     public void FinishClimbMovement()
@@ -218,7 +278,7 @@ public class PlayerController : MonoBehaviour
 
     void StopHorizontalMovement()
     {
-        Debug.Log("Dejó de moverse");
+        Debug.Log("DejÃ³ de moverse");
         moveDirection.x = 0;
         animator.SetBool("IsWalking", false);
         animator.SetFloat("WalkSpeedMultiplier", 1.0f);
@@ -268,7 +328,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             coyoteTimer -= Time.deltaTime;
-            // Salto variable al soltar el botón
+            // Salto variable al soltar el botÃ³n
             if (jumpAction.WasReleasedThisFrame() && verticalVelocity > 0)
                 verticalVelocity *= cutJumpHeight;
 
@@ -350,4 +410,64 @@ public class PlayerController : MonoBehaviour
         verticalVelocity = 0;
         controller.enabled = true;
     }
+
+    private void HandlePrayInputs()
+    {
+        if (northAction.WasPressedThisFrame()) RegisterPrayInput("North");
+        if (southAction.WasPressedThisFrame()) RegisterPrayInput("South");
+        if (eastAction.WasPressedThisFrame()) RegisterPrayInput("East");
+        if (westAction.WasPressedThisFrame()) RegisterPrayInput("West");
+    }
+
+    private void EnterPrayMode()
+    {
+        isPraying = true;
+        currentSequence.Clear();
+        animator.SetBool("IsPraying", true);
+
+        // Bloquea movimiento
+        moveDirection = Vector3.zero;
+        verticalVelocity = 0;
+    }
+
+    private void ExitPrayMode()
+    {
+        isPraying = false;
+        animator.SetBool("IsPraying", false);
+        currentSequence.Clear();
+    }
+    private void RegisterPrayInput(string dir)
+    {
+        currentSequence.Add(dir);
+        animator.SetTrigger(dir); // AnimaciÃ³n especÃ­fica
+
+        CheckSequence();
+    }
+    private void CheckSequence()
+    {
+        if (currentSequence.Count > correctSequence.Count)
+        {
+            currentSequence.Clear();
+            return;
+        }
+
+        for (int i = 0; i < currentSequence.Count; i++)
+        {
+            if (currentSequence[i] != correctSequence[i])
+                return; // AÃºn no coincide
+        }
+
+        if (currentSequence.Count == correctSequence.Count)
+        {
+            ActivateSpecialPower();
+            currentSequence.Clear();
+        }
+    }
+
+    private void ActivateSpecialPower()
+    {
+        animator.SetTrigger("SpecialPower");
+        Debug.Log("SECUENCIA CORRECTA â†’ Poder activado");
+    }
+
 }
