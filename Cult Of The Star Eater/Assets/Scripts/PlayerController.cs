@@ -61,6 +61,7 @@ public class PlayerController : MonoBehaviour
     public AudioClip dashSound;
     public AudioClip crouchSound;
     public AudioClip landSound;
+    public AudioClip power1Sound;
 
     [Header("Colliders")]
     private CollisionChecker collisionChecker;
@@ -75,12 +76,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("Pray")]
     private bool isPraying = false;
+    private GameObject currentDoor;
 
     // Secuencia actual
     private List<string> currentSequence = new List<string>();
 
     // Secuencias válidas
-    private readonly List<string> correctSequence = new List<string> { "North", "East", "South", "West" };
+
+    private readonly List<string> correctSequence1 = new List<string> { "North", "East", "South", "West" };
 
     void Awake()
     {
@@ -357,7 +360,15 @@ public class PlayerController : MonoBehaviour
     {
         verticalVelocity = force;
         moveDirection.y = verticalVelocity;
-        animator.SetBool("IsJumping", true);
+        // Si ya estamos saltando (es decir, es un doble salto), disparamos el trigger
+        if (animator.GetBool("IsJumping"))
+        {
+            animator.SetTrigger("DoubleJump");
+        }
+        else
+        {
+            animator.SetBool("IsJumping", true);
+        }
         if (sound) audioSource.PlayOneShot(sound);
         inputTimer = 0;
     }
@@ -445,7 +456,7 @@ public class PlayerController : MonoBehaviour
     }
     private void CheckSequence()
     {
-        if (currentSequence.Count > correctSequence.Count)
+        if (currentSequence.Count > correctSequence1.Count)
         {
             currentSequence.Clear();
             return;
@@ -453,21 +464,53 @@ public class PlayerController : MonoBehaviour
 
         for (int i = 0; i < currentSequence.Count; i++)
         {
-            if (currentSequence[i] != correctSequence[i])
+            if (currentSequence[i] != correctSequence1[i])
                 return; // Aún no coincide
         }
 
-        if (currentSequence.Count == correctSequence.Count)
+        if (currentSequence.Count == correctSequence1.Count)
         {
-            ActivateSpecialPower();
+            ActivatePray1();
             currentSequence.Clear();
         }
     }
 
-    private void ActivateSpecialPower()
+    private void ActivatePray1()
     {
-        animator.SetTrigger("SpecialPower");
-        Debug.Log("SECUENCIA CORRECTA → Poder activado");
+        animator.SetTrigger("Power1");
+        
+
+        // Comprobamos si hay una puerta guardada en la referencia
+        if (currentDoor != null)
+        {
+            Debug.Log("Puerta detectada: " + currentDoor.name + ". Procediendo a destruir.");
+            Destroy(currentDoor);
+            audioSource.PlayOneShot(power1Sound);
+            currentDoor = null; // Limpiamos la referencia tras destruir
+        }
+        else
+        {
+            Debug.Log("No hay ninguna puerta con el tag 'Door1' cerca.");
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Si el objeto que tocamos tiene el tag correcto, lo guardamos
+        if (other.CompareTag("Door1"))
+        {
+            currentDoor = other.gameObject;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Si nos alejamos de la puerta, limpiamos la referencia
+        // para que no se pueda destruir desde lejos
+        if (other.CompareTag("Door1"))
+        {
+            currentDoor = null;
+        }
     }
 
 }
