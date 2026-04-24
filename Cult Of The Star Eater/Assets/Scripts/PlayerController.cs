@@ -85,6 +85,18 @@ public class PlayerController : MonoBehaviour
 
     private readonly List<string> correctSequence1 = new List<string> { "North", "East", "South", "West" };
 
+    [Header("Jump Buff Pray")]
+    public float jumpBuffMultiplier = 1.5f; // Cuánto más saltará
+    public float buffDuration = 20f;
+    private float originalJumpForce;
+    private bool isJumpBuffActive = false;
+
+    // Nueva secuencia para el salto (ejemplo: Norte, Norte, Sur)
+    private Renderer characterRenderer;
+    private readonly List<string> correctSequenceJump = new List<string> { "North", "North", "South", "South" };
+
+    private GameObject currentAltar; // Almacena el altar en el que estamos
+
     void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -110,6 +122,8 @@ public class PlayerController : MonoBehaviour
         startingPoint = transform.position;
         originalHeight = controller.height;
         originalCenter = controller.center;
+        characterRenderer = GetComponentInChildren<Renderer>();
+        originalJumpForce = jumpForce;
 
     }
 
@@ -473,23 +487,25 @@ public class PlayerController : MonoBehaviour
     }
     private void CheckSequence()
     {
-        if (currentSequence.Count > correctSequence1.Count)
+        // Comprobar Secuencia 1 (Puerta)
+        CheckSpecificSequence(currentSequence, correctSequence1, ActivatePray1);
+
+        // Comprobar Secuencia 2 (Salto)
+        CheckSpecificSequence(currentSequence, correctSequenceJump, ActivateJumpBuff);
+    }
+
+    // Método auxiliar para no repetir código de comparación
+    private void CheckSpecificSequence(List<string> current, List<string> target, System.Action onSuccess)
+    {
+        if (current.Count != target.Count) return;
+
+        for (int i = 0; i < current.Count; i++)
         {
-            currentSequence.Clear();
-            return;
+            if (current[i] != target[i]) return;
         }
 
-        for (int i = 0; i < currentSequence.Count; i++)
-        {
-            if (currentSequence[i] != correctSequence1[i])
-                return; // Aún no coincide
-        }
-
-        if (currentSequence.Count == correctSequence1.Count)
-        {
-            ActivatePray1();
-            currentSequence.Clear();
-        }
+        onSuccess?.Invoke();
+        currentSequence.Clear(); // Limpiamos tras éxito
     }
 
     private void ActivatePray1()
@@ -511,12 +527,62 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void ActivateJumpBuff()
+    {
+        // Solo se activa si NO está activo ya Y si estamos en un Altar
+        if (!isJumpBuffActive && currentAltar != null)
+        {
+            StartCoroutine(JumpBuffRoutine());
+        }
+        else if (currentAltar == null)
+        {
+            
+            Debug.Log("Necesitas un Altar para realizar este rezo.");
+            currentSequence.Clear();
+        }
+    }
+
+    IEnumerator JumpBuffRoutine()
+    {
+        isJumpBuffActive = true;
+        jumpForce = originalJumpForce * jumpBuffMultiplier;
+
+        animator.SetTrigger("Power1");
+        if (power1Sound) audioSource.PlayOneShot(power1Sound);
+
+        // CAMBIO DE COLOR EN 3D
+        // Usamos .material (crea una instancia única para que no cambien todos los enemigos)
+        if (characterRenderer != null)
+        {
+            characterRenderer.material.color = Color.red;
+        }
+
+        yield return new WaitForSeconds(buffDuration);
+
+        // RESTAURAR FUERZA
+        jumpForce = originalJumpForce;
+
+        // RESTAURAR COLOR
+        if (characterRenderer != null)
+        {
+            characterRenderer.material.color = Color.white;
+        }
+
+        isJumpBuffActive = false;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         // Si el objeto que tocamos tiene el tag correcto, lo guardamos
         if (other.CompareTag("Door1"))
         {
             currentDoor = other.gameObject;
+        }
+        // NUEVO: Detección de Altar
+        if (other.CompareTag("Altar"))
+        {
+            currentAltar = other.gameObject;
+            Debug.Log("Cerca de un altar. Rezos especiales disponibles.");
         }
     }
 
@@ -527,6 +593,12 @@ public class PlayerController : MonoBehaviour
         if (other.CompareTag("Door1"))
         {
             currentDoor = null;
+        }
+        // NUEVO: Salir del rango del Altar
+        if (other.CompareTag("Altar"))
+        {
+            currentAltar = null;
+            Debug.Log("Te has alejado del altar.");
         }
     }
 

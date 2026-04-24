@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Door1
+  - Altar
   layers:
   - Default
   - TransparentFX
