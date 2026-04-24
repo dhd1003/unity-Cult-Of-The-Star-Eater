@@ -449,8 +449,25 @@ public class PlayerController : MonoBehaviour
     }
     private void RegisterPrayInput(string dir)
     {
+        // Detectamos si el jugador está mirando a la izquierda
+        bool isFacingLeft = transform.localScale.z < 0;
+
+        string finalDir = dir;
+
+        // Si mira a la izquierda, invertimos solo las animaciones laterales
+        if (isFacingLeft)
+        {
+            if (dir == "East") finalDir = "West";
+            else if (dir == "West") finalDir = "East";
+        }
+
+        // El Animator recibe la dirección invertida visualmente
+        animator.SetTrigger(finalDir);
+
+        // IMPORTANTE: La lógica de la secuencia (CheckSequence) debe seguir 
+        // recibiendo la dirección ORIGINAL 'dir' para que los botones 
+        // que pulsa el jugador coincidan con la contraseña técnica.
         currentSequence.Add(dir);
-        animator.SetTrigger(dir); // Animación específica
 
         CheckSequence();
     }
