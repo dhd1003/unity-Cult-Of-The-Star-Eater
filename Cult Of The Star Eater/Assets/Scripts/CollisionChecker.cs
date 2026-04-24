@@ -82,14 +82,14 @@ public class CollisionChecker : MonoBehaviour
 
         //RayCast isGroundNear
         RaycastHit groundHit;
-        if(Physics.Raycast(transform.position, Vector3.down, out groundHit, rayCastGroundDistance, Ground))
+        if(Physics.Raycast(transform.position + new Vector3(0,0.1f,0), Vector3.down, out groundHit, rayCastGroundDistance, Ground))
         {
-            Debug.DrawRay(transform.position, Vector3.down * rayCastGroundDistance, Color.white);
+            Debug.DrawRay(transform.position + new Vector3(0, 0.1f, 0), Vector3.down * rayCastGroundDistance, Color.white);
             isGroundNear = true;
         }
         else
         {
-            Debug.DrawRay(transform.position, Vector3.down * rayCastGroundDistance, Color.black);
+            Debug.DrawRay(transform.position + new Vector3(0, 0.1f, 0), Vector3.down * rayCastGroundDistance, Color.black);
             isGroundNear = false;
         }
 
