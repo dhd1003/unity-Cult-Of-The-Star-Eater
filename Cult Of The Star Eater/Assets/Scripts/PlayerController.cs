@@ -62,6 +62,7 @@ public class PlayerController : MonoBehaviour
     public AudioClip crouchSound;
     public AudioClip landSound;
     public AudioClip power1Sound;
+    public AudioClip jumpBuffSound;
 
     [Header("Colliders")]
     private CollisionChecker collisionChecker;
@@ -546,6 +547,7 @@ public class PlayerController : MonoBehaviour
     {
         isJumpBuffActive = true;
         jumpForce = originalJumpForce * jumpBuffMultiplier;
+        audioSource.PlayOneShot(jumpBuffSound);
 
         animator.SetTrigger("Power1");
         if (power1Sound) audioSource.PlayOneShot(power1Sound);
