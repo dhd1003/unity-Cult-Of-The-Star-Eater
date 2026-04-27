@@ -84,7 +84,7 @@ public class PlayerController : MonoBehaviour
 
     // Secuencias válidas
 
-    private readonly List<string> correctSequence1 = new List<string> { "North", "East", "South", "West" };
+    private readonly List<string> correctSequence1 = new List<string> { "West", "East", "South", "West","East", "South" };
 
     [Header("Jump Buff Pray")]
     public float jumpBuffMultiplier = 1.5f; // Cuánto más saltará
@@ -94,7 +94,7 @@ public class PlayerController : MonoBehaviour
 
     // Nueva secuencia para el salto (ejemplo: Norte, Norte, Sur)
     private Renderer characterRenderer;
-    private readonly List<string> correctSequenceJump = new List<string> { "North", "North", "South", "South" };
+    private readonly List<string> correctSequenceJump = new List<string> { "North", "South", "North", "South","North","South" };
 
     private GameObject currentAltar; // Almacena el altar en el que estamos
 
@@ -128,6 +128,7 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    #region Update
     void Update()
     {
 
@@ -234,6 +235,7 @@ public class PlayerController : MonoBehaviour
         }
 
     }
+    #endregion
 
     private void CorrectHangingPosition()
     {
@@ -336,6 +338,10 @@ public class PlayerController : MonoBehaviour
 
     public void HandleVariableJump()
     {
+        // 1. Detectamos si el jugador está manteniendo hacia abajo
+        Vector2 moveInput = moveAction.ReadValue<Vector2>();
+        bool isPressingDown = moveInput.y < -0.5f;
+
         if (controller.isGrounded)
         {
             coyoteTimer = coyoteTime;
@@ -346,7 +352,6 @@ public class PlayerController : MonoBehaviour
         else
         {
             coyoteTimer -= Time.deltaTime;
-            // Salto variable al soltar el botón
             if (jumpAction.WasReleasedThisFrame() && verticalVelocity > 0)
                 verticalVelocity *= cutJumpHeight;
 
@@ -358,12 +363,14 @@ public class PlayerController : MonoBehaviour
 
         if (inputTimer > 0)
         {
-            if (coyoteTimer > 0 && !isCrouched)
+            // 2. Añadimos "!isPressingDown" a las condiciones de salto
+            // Si está pulsando abajo, estas condiciones serán falsas y NO llamará a DoJump
+            if (coyoteTimer > 0 && !isCrouched && !isPressingDown)
             {
                 DoJump(jumpForce, jumpSound);
                 coyoteTimer = 0;
             }
-            else if (!controller.isGrounded && !hasDoubleJumped && canDoubleJump)
+            else if (!controller.isGrounded && !hasDoubleJumped && canDoubleJump && !isPressingDown)
             {
                 hasDoubleJumped = true;
                 DoJump(jumpForce, doubleJumpSound);
@@ -382,6 +389,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
+            animator.SetTrigger("DoubleJump");
             animator.SetBool("IsJumping", true);
         }
         if (sound) audioSource.PlayOneShot(sound);
