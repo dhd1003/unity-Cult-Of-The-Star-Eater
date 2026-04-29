@@ -10,26 +10,35 @@ public class GravityPlatform : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    // Mientras esté dentro del trigger del suelo...
     private void OnTriggerStay(Collider other)
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
             estaTocandoSuelo = true;
-            rb.isKinematic = true;
-            rb.velocity = Vector3.zero;
+
+            // 1. Primero detenemos el movimiento físico
+            if (!rb.isKinematic)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+
+                // 2. Luego lo hacemos cinemático
+                rb.isKinematic = true;
+            }
         }
     }
 
     void FixedUpdate()
     {
-        // Si en el último frame físico no detectamos suelo, activamos gravedad
         if (!estaTocandoSuelo)
         {
-            rb.isKinematic = false;
+            // Solo lo cambiamos si no es cinemático para evitar llamadas innecesarias
+            if (rb.isKinematic)
+            {
+                rb.isKinematic = false;
+            }
         }
 
-        // Reseteamos el flag para el siguiente frame
         estaTocandoSuelo = false;
     }
 }
