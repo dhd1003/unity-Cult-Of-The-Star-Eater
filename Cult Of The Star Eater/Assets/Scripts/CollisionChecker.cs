@@ -9,6 +9,7 @@ public class CollisionChecker : MonoBehaviour
     public LayerMask Ground;
     public float rayCastDistance = 1f;
     public float rayCastGroundDistance = 2f;
+    public float rayCastIsGroundedDistance = 0.1f;
     private Vector3 originPointWall;
     private Vector3 originPointClimb;
     public Vector3 offset;
@@ -21,6 +22,7 @@ public class CollisionChecker : MonoBehaviour
     public bool wallCollision;
     public bool CanClimb;
     public bool isGroundNear;
+    public bool isGrounded;
 
     public Vector3 wallHitPoint;
 
@@ -81,8 +83,8 @@ public class CollisionChecker : MonoBehaviour
         }
 
         //RayCast isGroundNear
-        RaycastHit groundHit;
-        if(Physics.Raycast(transform.position + new Vector3(0,0.1f,0), Vector3.down, out groundHit, rayCastGroundDistance, Ground))
+        RaycastHit groundNearHit;
+        if(Physics.Raycast(transform.position + new Vector3(0,0.1f,0), Vector3.down, out groundNearHit, rayCastGroundDistance, Ground))
         {
             Debug.DrawRay(transform.position + new Vector3(0, 0.1f, 0), Vector3.down * rayCastGroundDistance, Color.white);
             isGroundNear = true;
@@ -93,7 +95,19 @@ public class CollisionChecker : MonoBehaviour
             isGroundNear = false;
         }
 
-   
+        RaycastHit groundHit;
+        if (Physics.Raycast(transform.position + new Vector3(0, 0.1f, 0), Vector3.down, out groundHit, rayCastIsGroundedDistance, Ground))
+        {
+            Debug.DrawRay(transform.position + new Vector3(0, 0.1f, 0), Vector3.down * rayCastIsGroundedDistance, Color.red);
+            isGrounded = true;
+        }
+        else
+        {
+            Debug.DrawRay(transform.position + new Vector3(0, 0.1f, 0), Vector3.down * rayCastIsGroundedDistance, Color.yellow);
+            isGrounded = false;
+        }
+
+
 
 
     }

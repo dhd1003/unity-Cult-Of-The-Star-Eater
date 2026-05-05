@@ -129,6 +129,20 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Update
+
+    private void FixedUpdate()
+    {
+        if (controller.isGrounded) 
+        {
+            animator.SetBool("IsJumping", false);
+            animator.SetBool("IsGrounded", true);
+
+        }
+        else
+        {
+            animator.SetBool("IsGrounded", false);
+        }
+    }
     void Update()
     {
 
@@ -141,6 +155,7 @@ public class PlayerController : MonoBehaviour
 
 
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
+
 
         // Si aterriza mientras mantiene el gatillo, también salimos del modo aire
         if (controller.isGrounded && isPraying)
