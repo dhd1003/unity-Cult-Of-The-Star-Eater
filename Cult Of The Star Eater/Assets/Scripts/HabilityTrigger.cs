@@ -7,6 +7,9 @@ public class HabilityTrigger : MonoBehaviour
 {
 
     public string hability;
+    [Header("Sonidos")]
+    public AudioSource audioSource;
+    public AudioClip soundGetHability;
 
     void OnTriggerEnter(Collider other)
     {
@@ -16,11 +19,13 @@ public class HabilityTrigger : MonoBehaviour
             {
                 case "doublejump":
                     GameManager.Instance.canDoubleJump = true;
+                    audioSource.PlayOneShot(soundGetHability);
                     Destroy(gameObject);
                 break;
 
                 case "dash":
                     GameManager.Instance.canDash = true;
+                    audioSource.PlayOneShot(soundGetHability);
                     Destroy(gameObject);
                 break;
 

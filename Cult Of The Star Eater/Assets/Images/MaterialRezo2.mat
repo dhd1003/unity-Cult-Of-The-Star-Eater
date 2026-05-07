@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MaterialRezo1
+  m_Name: MaterialRezo2
   m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -42,7 +42,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: f7b03f69fb52b9740b462d881fe76aee, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6d23cde05fb17bf48980942ea80fb83d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -62,11 +62,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: f7b03f69fb52b9740b462d881fe76aee, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: f7b03f69fb52b9740b462d881fe76aee, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6d23cde05fb17bf48980942ea80fb83d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -130,8 +130,8 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.6924528, g: 0.7706972, b: 1, a: 1}
-    - _Color: {r: 0.6924528, g: 0.7706972, b: 1, a: 1}
+    - _BaseColor: {r: 1, g: 0.54194486, b: 0.50377357, a: 1}
+    - _Color: {r: 1, g: 0.54194486, b: 0.5037735, a: 1}
     - _EmissionColor: {r: 0.0013649607, g: 0.0013649607, b: 0.0013649607, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

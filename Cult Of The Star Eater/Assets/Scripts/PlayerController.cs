@@ -63,6 +63,9 @@ public class PlayerController : MonoBehaviour
     public AudioClip landSound;
     public AudioClip power1Sound;
     public AudioClip jumpBuffSound;
+    [Header("Configuración de Sonido Aleatorio")]
+    [Range(0.8f, 1.2f)] public float minPitch = 0.9f;
+    [Range(0.8f, 1.2f)] public float maxPitch = 1.1f;
 
     [Header("Colliders")]
     private CollisionChecker collisionChecker;
@@ -365,7 +368,7 @@ public class PlayerController : MonoBehaviour
             coyoteTimer = coyoteTime;
             hasDoubleJumped = false;
             animator.SetBool("IsJumping", false);
-            if (verticalVelocity < -5f && landSound) audioSource.PlayOneShot(landSound);
+            if (verticalVelocity < -5f && landSound) PlayRandomPitch(landSound);
         }
         else
         {
@@ -410,7 +413,8 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("DoubleJump");
             animator.SetBool("IsJumping", true);
         }
-        if (sound) audioSource.PlayOneShot(sound);
+        // REEMPLAZO: Usamos la función con pitch aleatorio
+        if (sound) PlayRandomPitch(sound);
         inputTimer = 0;
     }
 
@@ -437,7 +441,7 @@ public class PlayerController : MonoBehaviour
         isDashing = true;
         dashCooldownTimer = dashCooldown;
         animator.SetBool("IsDashing", true);
-        if (dashSound) audioSource.PlayOneShot(dashSound);
+        if (dashSound) PlayRandomPitch(dashSound);
 
         SetColliderHeight(originalHeight / 2.5f, 0.4f);
 
@@ -598,6 +602,17 @@ public class PlayerController : MonoBehaviour
         }
 
         isJumpBuffActive = false;
+    }
+    private void PlayRandomPitch(AudioClip clip)
+    {
+        if (clip == null || audioSource == null) return;
+
+        // Cambiamos el pitch aleatoriamente
+        audioSource.pitch = Random.Range(minPitch, maxPitch);
+
+        // Reproducimos
+        audioSource.PlayOneShot(clip);
+
     }
 
     private void OnTriggerEnter(Collider other)
