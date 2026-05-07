@@ -15,12 +15,12 @@ public class HabilityTrigger : MonoBehaviour
             switch (hability)
             {
                 case "doublejump":
-                    other.GetComponent<PlayerController>().canDoubleJump = true;
+                    GameManager.Instance.canDoubleJump = true;
                     Destroy(gameObject);
                 break;
 
                 case "dash":
-                    other.GetComponent<PlayerController>().canDash = true;
+                    GameManager.Instance.canDash = true;
                     Destroy(gameObject);
                 break;
 

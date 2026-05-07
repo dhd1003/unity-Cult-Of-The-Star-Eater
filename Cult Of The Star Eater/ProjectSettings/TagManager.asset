@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Door1
   - Altar
+  - CheckPoint
+  - DeadZone
   layers:
   - Default
   - TransparentFX

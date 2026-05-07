@@ -33,9 +33,7 @@ public class PlayerController : MonoBehaviour
     private bool isDashing = false;
     private float dashCooldownTimer = 0f;
 
-    [Header("Desbloqueables")]
-    public bool canDash = false;
-    public bool canDoubleJump = false;
+
 
     [Header("Coyote Time & Input Buffer")]
     public float coyoteTime = 0.2f;
@@ -48,7 +46,9 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
     private Vector3 moveDirection;
     private float verticalVelocity;
-    private Vector3 startingPoint;
+
+    private GameObject PanelFade;
+    private Animator animatorPanelFade;
 
     private float originalHeight;
     private Vector3 originalCenter;
@@ -101,6 +101,9 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
+
+        PanelFade = GameObject.Find("FadePanel");
+        animatorPanelFade = PanelFade.GetComponent<Animator>();
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         dashAction = playerInput.actions["Dash"];
@@ -120,7 +123,7 @@ public class PlayerController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         collisionChecker = GetComponent<CollisionChecker>();
-        startingPoint = transform.position;
+        GameManager.Instance.CheckPoint= transform.position;
         originalHeight = controller.height;
         originalCenter = controller.center;
         characterRenderer = GetComponentInChildren<Renderer>();
@@ -146,7 +149,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
 
-        if (teleportAction.WasPressedThisFrame()) TeleportToStart();
+        if (teleportAction.WasPressedThisFrame()) BackToCheckPoint();
 
 
         wallCollision = collisionChecker.wallCollision;
@@ -385,7 +388,7 @@ public class PlayerController : MonoBehaviour
                 DoJump(jumpForce, jumpSound);
                 coyoteTimer = 0;
             }
-            else if (!controller.isGrounded && !hasDoubleJumped && canDoubleJump && !isPressingDown)
+            else if (!controller.isGrounded && !hasDoubleJumped && GameManager.Instance.canDoubleJump && !isPressingDown)
             {
                 hasDoubleJumped = true;
                 DoJump(jumpForce, doubleJumpSound);
@@ -421,7 +424,7 @@ public class PlayerController : MonoBehaviour
     public void HandleDashInput()
     {
         // Dash es "Right Trigger"
-        if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0 && canDash && controller.isGrounded)
+        if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0 && GameManager.Instance.canDash && controller.isGrounded)
         {
             StartCoroutine(DashRoutine());
         }
@@ -452,10 +455,11 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
     }
 
-    public void TeleportToStart()
+    public void BackToCheckPoint()
     {
+        animatorPanelFade.SetTrigger("Fade");
         controller.enabled = false;
-        transform.position = startingPoint;
+        transform.position = GameManager.Instance.CheckPoint;
         verticalVelocity = 0;
         controller.enabled = true;
     }
@@ -608,6 +612,16 @@ public class PlayerController : MonoBehaviour
         {
             currentAltar = other.gameObject;
             Debug.Log("Cerca de un altar. Rezos especiales disponibles.");
+        }
+
+        if (other.CompareTag("CheckPoint"))
+        {
+            GameManager.Instance.CheckPoint = transform.position;
+        }
+
+        if (other.CompareTag("DeadZone"))
+        {
+            BackToCheckPoint();
         }
     }
 
