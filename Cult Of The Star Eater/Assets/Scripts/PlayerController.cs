@@ -107,6 +107,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Pray Visuals (Notes)")]
     public GameObject praySpritesContainer; // El objeto 'PraySprites' que contiene las 6 notas
+    public GameObject l2Sprite; // El objeto 'PraySprites' que contiene las 6 notas
     public SpriteRenderer[] noteRenderers;   // Arrastra aquí Note1, Note2... Note6 (en orden)
     public Sprite spriteNorth, spriteSouth, spriteEast, spriteWest;
 
@@ -507,6 +508,8 @@ public class PlayerController : MonoBehaviour
 
     private void EnterPrayMode()
     {
+        // Desactivamos el sprite de instrucción inmediatamente
+        if (l2Sprite != null) l2Sprite.SetActive(false);
         isPraying = true;
         currentSequence.Clear();
         animator.SetBool("IsPraying", true);
@@ -522,6 +525,7 @@ public class PlayerController : MonoBehaviour
 
     private void ExitPrayMode()
     {
+
         isPraying = false;
         animator.SetBool("IsPraying", false);
         currentSequence.Clear();
@@ -615,8 +619,10 @@ public class PlayerController : MonoBehaviour
 
     private void ActivatePray1()
     {
+        l2Sprite.SetActive(false);
         animator.SetTrigger("Power1");
         
+
 
         // Comprobamos si hay una puerta guardada en la referencia
         if (currentDoor != null)
@@ -625,6 +631,7 @@ public class PlayerController : MonoBehaviour
             Destroy(currentDoor);
             audioSource.PlayOneShot(power1Sound);
             currentDoor = null; // Limpiamos la referencia tras destruir
+            
         }
         else
         {
@@ -641,10 +648,11 @@ public class PlayerController : MonoBehaviour
         }
         else if (currentAltar == null)
         {
-            
-            Debug.Log("Necesitas un Altar para realizar este rezo.");
+
             currentSequence.Clear();
         }
+        //Solo se activa si NO está activo ya Y si estamos en un Altar
+
     }
 
     IEnumerator JumpBuffRoutine()
@@ -693,13 +701,16 @@ public class PlayerController : MonoBehaviour
         // Si el objeto que tocamos tiene el tag correcto, lo guardamos
         if (other.CompareTag("Door1"))
         {
+            
             currentDoor = other.gameObject;
         }
         // NUEVO: Detección de Altar
         if (other.CompareTag("Altar"))
         {
+
+            
             currentAltar = other.gameObject;
-            Debug.Log("Cerca de un altar. Rezos especiales disponibles.");
+            
         }
 
         if (other.CompareTag("CheckPoint"))
@@ -713,18 +724,38 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Door1") || other.CompareTag("Altar"))
+        {
+            // El sprite solo se activa si NO estamos en modo rezo
+            if (!isPraying)
+            {
+                l2Sprite.SetActive(true);
+            }
+            else
+            {
+                l2Sprite.SetActive(false);
+            }
+        }
+    }
+
+
     private void OnTriggerExit(Collider other)
     {
         // Si nos alejamos de la puerta, limpiamos la referencia
         // para que no se pueda destruir desde lejos
         if (other.CompareTag("Door1"))
         {
+            l2Sprite.SetActive(false);
+
             currentDoor = null;
         }
         // NUEVO: Salir del rango del Altar
         if (other.CompareTag("Altar"))
         {
             currentAltar = null;
+            l2Sprite.SetActive(false);
             Debug.Log("Te has alejado del altar.");
         }
     }

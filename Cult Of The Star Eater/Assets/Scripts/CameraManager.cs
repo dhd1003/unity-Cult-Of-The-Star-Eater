@@ -18,15 +18,15 @@ public class CameraManager : MonoBehaviour
     public float zoomSpeed = 5f;
 
     [Header("Configuración de Desplazamiento Vertical")]
-    public float yOffsetDown = -2f; // Cuánto baja la cámara
-    public float yOffsetUp = 2f;   // Cuánto sube la cámara
-    public float offsetSpeed = 3f;  // Velocidad de la transición
+    public float yOffsetDown = -2f;
+    public float yOffsetUp = 2f;
+    public float offsetSpeed = 3f;
     private float normalYOffset;
 
     [Header("Configuración de Desplazamiento Horizontal")]
-    [SerializeField]private GameObject player;
-    public float zOffset = 2f;   // Cuánto se mueve la cámara
-    public float xOffsetSpeed = 3f;  // Velocidad de la transición
+    [SerializeField] private GameObject player;
+    public float zOffset = 2f;
+    public float xOffsetSpeed = 3f;
     private float normalZOffset;
 
     void Awake()
@@ -36,8 +36,9 @@ public class CameraManager : MonoBehaviour
 
         if (framingTransposer != null)
         {
+            // Guardamos los valores iniciales del inspector como "centro"
             normalYOffset = framingTransposer.m_TrackedObjectOffset.y;
-            normalZOffset = framingTransposer.m_TrackedObjectOffset.x;
+            normalZOffset = framingTransposer.m_TrackedObjectOffset.z;
         }
 
         if (playerInput != null)
@@ -45,71 +46,52 @@ public class CameraManager : MonoBehaviour
             prayAction = playerInput.actions.FindAction("Pray");
             moveCameraAction = playerInput.actions.FindAction("MoveCamera");
         }
-
     }
 
     void Update()
     {
-        if (vcam == null) return;
+        if (vcam == null || framingTransposer == null) return;
 
-        HandleZoom();
-        HandleVerticalPan();
-        HandleHorizontalPan();
+        bool isPraying = prayAction != null && prayAction.IsPressed();
+
+        HandleZoom(isPraying);
+        HandleOffsets(isPraying);
     }
 
-    private void HandleZoom()
+    private void HandleZoom(bool isPraying)
     {
-        if (prayAction == null) return;
-
-        bool isPraying = prayAction.IsPressed();
         float targetFOV = isPraying ? prayFOV : normalFOV;
         vcam.m_Lens.FieldOfView = Mathf.Lerp(vcam.m_Lens.FieldOfView, targetFOV, zoomSpeed * Time.deltaTime);
     }
 
-    private void HandleVerticalPan()
+    private void HandleOffsets(bool isPraying)
     {
-        if (moveCameraAction == null || framingTransposer == null) return;
-
-        Vector2 moveValue = moveCameraAction.ReadValue<Vector2>();
         float targetY = normalYOffset;
-
-        // Lógica de detección: Arriba (> 0.5) o Abajo (< -0.5)
-        if (moveValue.y > 0.5f)
-        {
-            targetY = normalYOffset + yOffsetUp;
-        }
-        else if (moveValue.y < -0.5f)
-        {
-            targetY = normalYOffset + yOffsetDown;
-        }
-        // Si está entre -0.5 y 0.5, targetY se mantiene en normalYOffset (vuelve al centro)
-
-        // Aplicamos el movimiento suave
-        Vector3 currentOffset = framingTransposer.m_TrackedObjectOffset;
-        currentOffset.y = Mathf.Lerp(currentOffset.y, targetY, offsetSpeed * Time.deltaTime);
-        framingTransposer.m_TrackedObjectOffset = currentOffset;
-    }
-    private void HandleHorizontalPan()
-    {
-        if (moveCameraAction == null || framingTransposer == null) return;
-
-        float moveValue = player.transform.localScale.z;
         float targetZ = normalZOffset;
 
-        // Lógica de detección: Arriba (> 0.5) o Abajo (< -0.5)
-        if (moveValue > 0f)
+        // SI NO ESTÁ REZANDO: Calculamos los desplazamientos normales
+        if (!isPraying)
         {
-            targetZ= normalZOffset + zOffset;
-        }
-        else if (moveValue < -0f)
-        {
-            targetZ = normalZOffset - zOffset;
-        }
-        // Si está entre -0.5 y 0.5, targetY se mantiene en normalYOffset (vuelve al centro)
+            // Lógica Horizontal (basada en escala del jugador)
+            float lookDirection = player.transform.localScale.z;
+            if (lookDirection > 0.1f) targetZ = normalZOffset + zOffset;
+            else if (lookDirection < -0.1f) targetZ = normalZOffset - zOffset;
 
-        // Aplicamos el movimiento suave
+            // Lógica Vertical (basada en input de mirar arriba/abajo)
+            if (moveCameraAction != null)
+            {
+                Vector2 moveValue = moveCameraAction.ReadValue<Vector2>();
+                if (moveValue.y > 0.5f) targetY = normalYOffset + yOffsetUp;
+                else if (moveValue.y < -0.5f) targetY = normalYOffset + yOffsetDown;
+            }
+        }
+        // SI ESTÁ REZANDO: targetY y targetZ se quedan en normalYOffset/normalZOffset (el centro)
+
+        // Aplicamos ambos movimientos con Lerp
         Vector3 currentOffset = framingTransposer.m_TrackedObjectOffset;
+        currentOffset.y = Mathf.Lerp(currentOffset.y, targetY, offsetSpeed * Time.deltaTime);
         currentOffset.z = Mathf.Lerp(currentOffset.z, targetZ, offsetSpeed * Time.deltaTime);
+
         framingTransposer.m_TrackedObjectOffset = currentOffset;
     }
 }
