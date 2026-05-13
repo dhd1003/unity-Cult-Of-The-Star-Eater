@@ -56,6 +56,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Sonidos")]
     public AudioSource audioSource;
+    public AudioSource audioSourceNoChanges;
     public AudioClip jumpSound;
     public AudioClip doubleJumpSound;
     public AudioClip dashSound;
@@ -63,6 +64,12 @@ public class PlayerController : MonoBehaviour
     public AudioClip landSound;
     public AudioClip power1Sound;
     public AudioClip jumpBuffSound;
+
+    public AudioClip northPray;
+    public AudioClip southPray;
+    public AudioClip westPray;
+    public AudioClip eastPray;
+
     [Header("Configuración de Sonido Aleatorio")]
     [Range(0.8f, 1.2f)] public float minPitch = 0.9f;
     [Range(0.8f, 1.2f)] public float maxPitch = 1.1f;
@@ -85,8 +92,7 @@ public class PlayerController : MonoBehaviour
     // Secuencia actual
     private List<string> currentSequence = new List<string>();
 
-    // Secuencias válidas
-
+    // Secuencias válidas Power 1
     private readonly List<string> correctSequence1 = new List<string> { "West", "East", "South", "West","East", "South" };
 
     [Header("Jump Buff Pray")]
@@ -95,9 +101,14 @@ public class PlayerController : MonoBehaviour
     private float originalJumpForce;
     private bool isJumpBuffActive = false;
 
-    // Nueva secuencia para el salto (ejemplo: Norte, Norte, Sur)
+    // Secuancia válida Jump Buff
     private Renderer characterRenderer;
     private readonly List<string> correctSequenceJump = new List<string> { "North", "South", "North", "South","North","South" };
+
+    [Header("Pray Visuals (Notes)")]
+    public GameObject praySpritesContainer; // El objeto 'PraySprites' que contiene las 6 notas
+    public SpriteRenderer[] noteRenderers;   // Arrastra aquí Note1, Note2... Note6 (en orden)
+    public Sprite spriteNorth, spriteSouth, spriteEast, spriteWest;
 
     private GameObject currentAltar; // Almacena el altar en el que estamos
 
@@ -470,10 +481,28 @@ public class PlayerController : MonoBehaviour
 
     private void HandlePrayInputs()
     {
-        if (northAction.WasPressedThisFrame()) RegisterPrayInput("North");
-        if (southAction.WasPressedThisFrame()) RegisterPrayInput("South");
-        if (eastAction.WasPressedThisFrame()) RegisterPrayInput("East");
-        if (westAction.WasPressedThisFrame()) RegisterPrayInput("West");
+        if (northAction.WasPressedThisFrame())
+        {
+            RegisterPrayInput("North");
+            audioSourceNoChanges.PlayOneShot(northPray);
+        }
+        if (southAction.WasPressedThisFrame())
+        {
+            RegisterPrayInput("South");
+            audioSourceNoChanges.PlayOneShot(southPray);
+        }
+        if (eastAction.WasPressedThisFrame())
+        {
+            RegisterPrayInput("East");
+            audioSourceNoChanges.PlayOneShot(eastPray);
+        }
+
+        if (westAction.WasPressedThisFrame())
+        {
+            RegisterPrayInput("West");
+            audioSourceNoChanges.PlayOneShot(westPray);
+        }
+
     }
 
     private void EnterPrayMode()
@@ -481,6 +510,10 @@ public class PlayerController : MonoBehaviour
         isPraying = true;
         currentSequence.Clear();
         animator.SetBool("IsPraying", true);
+
+        // Mostramos el contenedor y limpiamos los dibujos anteriores
+        if (praySpritesContainer != null) praySpritesContainer.SetActive(true);
+        ClearAllNotes();
 
         // Bloquea movimiento
         moveDirection = Vector3.zero;
@@ -492,9 +525,26 @@ public class PlayerController : MonoBehaviour
         isPraying = false;
         animator.SetBool("IsPraying", false);
         currentSequence.Clear();
+        // Ocultamos el contenedor
+        if (praySpritesContainer != null) praySpritesContainer.SetActive(false);
     }
     private void RegisterPrayInput(string dir)
     {
+        // --- NUEVA LÓGICA DE REINICIO ---
+        // Si ya hay 6 notas en la lista, significa que el siguiente rezo es el séptimo.
+        // Reiniciamos la lista y limpiamos los sprites para empezar de nuevo en Note1.
+        if (currentSequence.Count >= noteRenderers.Length)
+        {
+            currentSequence.Clear();
+            ClearAllNotes();
+            Debug.Log("Límite de rezos alcanzado. Reiniciando secuencia visual.");
+        }
+        // 1. Dibujar el sprite en el hueco correspondiente
+        // Usamos currentSequence.Count porque nos dice cuántas notas llevamos ya
+        if (currentSequence.Count < noteRenderers.Length)
+        {
+            DrawNote(currentSequence.Count, dir);
+        }
         // Detectamos si el jugador está mirando a la izquierda
         bool isFacingLeft = transform.localScale.z < 0;
 
@@ -516,6 +566,29 @@ public class PlayerController : MonoBehaviour
         currentSequence.Add(dir);
 
         CheckSequence();
+    }
+    // --- Métodos de apoyo ---
+
+    private void DrawNote(int index, string dir)
+    {
+        if (noteRenderers[index] == null) return;
+
+        // Asignamos el sprite según la dirección pulsada
+        switch (dir)
+        {
+            case "North": noteRenderers[index].sprite = spriteNorth; break;
+            case "South": noteRenderers[index].sprite = spriteSouth; break;
+            case "East": noteRenderers[index].sprite = spriteEast; break;
+            case "West": noteRenderers[index].sprite = spriteWest; break;
+        }
+    }
+
+    private void ClearAllNotes()
+    {
+        foreach (var renderer in noteRenderers)
+        {
+            if (renderer != null) renderer.sprite = null;
+        }
     }
     private void CheckSequence()
     {
@@ -578,10 +651,10 @@ public class PlayerController : MonoBehaviour
     {
         isJumpBuffActive = true;
         jumpForce = originalJumpForce * jumpBuffMultiplier;
-        audioSource.PlayOneShot(jumpBuffSound);
+        audioSourceNoChanges.PlayOneShot(jumpBuffSound);
 
         animator.SetTrigger("Power1");
-        if (power1Sound) audioSource.PlayOneShot(power1Sound);
+        if (power1Sound) audioSourceNoChanges.PlayOneShot(power1Sound);
 
         // CAMBIO DE COLOR EN 3D
         // Usamos .material (crea una instancia única para que no cambien todos los enemigos)
