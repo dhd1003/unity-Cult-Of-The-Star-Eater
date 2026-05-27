@@ -13820,7 +13820,7 @@ GameObject:
   - component: {fileID: 225084628}
   - component: {fileID: 225084629}
   - component: {fileID: 225084630}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: L2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -82792,7 +82792,7 @@ GameObject:
   - component: {fileID: 1295438970}
   - component: {fileID: 1295438972}
   - component: {fileID: 1295438971}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Dash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101340,7 +101340,7 @@ GameObject:
   - component: {fileID: 1630085361}
   - component: {fileID: 1630085363}
   - component: {fileID: 1630085362}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
