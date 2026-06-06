@@ -496,7 +496,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Darcy_Walk
-  m_Speed: 2
+  m_Speed: 2.5
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -7252347574596929338}
@@ -987,7 +987,7 @@ AnimatorStateMachine:
     m_Position: {x: 330, y: -140, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -2876309011146019755}
-    m_Position: {x: 510, y: 0, z: 0}
+    m_Position: {x: 520, y: -10, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -2736219170597834913}
     m_Position: {x: 620, y: 260, z: 0}
