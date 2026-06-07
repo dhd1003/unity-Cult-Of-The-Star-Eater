@@ -6,7 +6,8 @@ using UnityEngine;
 public class HabilityTrigger : MonoBehaviour
 {
 
-    public string hability;
+    [Tooltip("0=Dash, 1=DoubleJump")]
+    [Range(0, 1)] public int nHability;
     [Header("Sonidos")]
     public AudioSource audioSource;
     public AudioClip soundGetHability;
@@ -15,15 +16,15 @@ public class HabilityTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            switch (hability)
+            switch (nHability)
             {
-                case "doublejump":
+                case 1:
                     GameManager.Instance.canDoubleJump = true;
                     audioSource.PlayOneShot(soundGetHability);
                     Destroy(gameObject);
                 break;
 
-                case "dash":
+                case 0:
                     GameManager.Instance.canDash = true;
                     audioSource.PlayOneShot(soundGetHability);
                     Destroy(gameObject);

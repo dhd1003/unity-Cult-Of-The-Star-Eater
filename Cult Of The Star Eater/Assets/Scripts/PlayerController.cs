@@ -168,7 +168,7 @@ public class PlayerController : MonoBehaviour
 
         // Actualizo datos del detector de colisiones externo
         wallCollision = collisionChecker.wallCollision;
-        canClimb = collisionChecker.CanClimb;
+        canClimb = collisionChecker.canClimb;
         isGroundNear = collisionChecker.isGroundNear;
 
         Vector2 inputVector = moveAction.ReadValue<Vector2>();

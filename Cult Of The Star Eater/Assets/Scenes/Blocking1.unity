@@ -27068,7 +27068,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0138430566f1a2742919ae2be0dcd24b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hability: doublejump
+  nHability: 1
   audioSource: {fileID: 84215221}
   soundGetHability: {fileID: 8300000, guid: 22be78b61d5ff42488e642c49fbd233b, type: 3}
 --- !u!65 &434511920
@@ -45387,7 +45387,7 @@ MonoBehaviour:
   originalDirection: {x: 1, y: 0, z: 0}
   aditionRayCastClimb: 0.15
   wallCollision: 0
-  CanClimb: 0
+  canClimb: 0
   isGroundNear: 0
   isGrounded: 0
   wallHitPoint: {x: 0, y: 0, z: 0}
@@ -49577,7 +49577,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0138430566f1a2742919ae2be0dcd24b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hability: dash
+  nHability: 0
   audioSource: {fileID: 84215221}
   soundGetHability: {fileID: 8300000, guid: 22be78b61d5ff42488e642c49fbd233b, type: 3}
 --- !u!54 &759797379

@@ -20,7 +20,7 @@ public class CollisionChecker : MonoBehaviour
     private CharacterController controller;
 
     public bool wallCollision;
-    public bool CanClimb;
+    public bool canClimb;
     public bool isGroundNear;
     public bool isGrounded;
 
@@ -33,7 +33,7 @@ public class CollisionChecker : MonoBehaviour
         controller = GetComponent<CharacterController>();
         direction = originalDirection;
         wallCollision = false;
-        CanClimb = true; ;
+        canClimb = true; ;
     }
 
     // Update is called once per frame
@@ -72,13 +72,13 @@ public class CollisionChecker : MonoBehaviour
         if (Physics.Raycast(originPointClimb, direction, out climbHit, rayCastDistance, Ground))
         {
             Debug.DrawRay(originPointClimb, direction * rayCastDistance, Color.green);
-            CanClimb = false;
+            canClimb = false;
             
         }
         else
         {
             Debug.DrawRay(originPointClimb, direction * rayCastDistance, Color.magenta);
-            CanClimb = true;
+            canClimb = true;
             
         }
 
