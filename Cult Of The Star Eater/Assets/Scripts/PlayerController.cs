@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
-    // Input System
+    // === Sistema de Input (Nuevo Input System) ===
     private PlayerInput playerInput;
     private InputAction moveAction;
     private InputAction jumpAction;
@@ -18,45 +18,44 @@ public class PlayerController : MonoBehaviour
     private InputAction eastAction;
     private InputAction westAction;
 
-
     [Header("Movimiento")]
     public float moveSpeed = 6f;
     public float gravity = 25f;
-    public float jumpForce = 12f;
-    [Range(0, 1)] public float cutJumpHeight = 0.5f;
+    public float jumpForce = 10f;
+    [Range(0, 1)] public float cutJumpHeight = 0.75f; // Para controlar la altura del salto soltando el botón
 
     [Header("Dash")]
-    public float dashSpeed = 15f;
+    public float dashSpeed = 8f;
     public float dashDuration = 0.3f;
     public float dashCooldown = 0.7f;
-
     private bool isDashing = false;
     private float dashCooldownTimer = 0f;
 
-
-
     [Header("Coyote Time & Input Buffer")]
-    public float coyoteTime = 0.2f;
+    public float coyoteTime = 0.1f;          // Margen para saltar justo al caer de una plataforma
     private float coyoteTimer;
-    public float inputBuffer = 0.15f;
+    public float inputBuffer = 0.15f;        // Guarda el input de salto un instante antes de tocar el suelo
     private float inputTimer;
 
+    // === Componentes y físicas básicas ===
     private bool hasDoubleJumped = false;
     private CharacterController controller;
     private Animator animator;
     private Vector3 moveDirection;
     private float verticalVelocity;
 
+    // === Efecto de Fundido (Fade) ===
     private GameObject PanelFade;
     private Animator animatorPanelFade;
 
+    // === Agacharse ===
     private float originalHeight;
     private Vector3 originalCenter;
     private bool isCrouched = false;
 
     [Header("Sonidos")]
     public AudioSource audioSource;
-    public AudioSource audioSourceNoChanges;
+    public AudioSource audioSourceNoChanges; // Para sonidos estables sin variaciones de pitch
     public AudioClip jumpSound;
     public AudioClip doubleJumpSound;
     public AudioClip dashSound;
@@ -64,15 +63,14 @@ public class PlayerController : MonoBehaviour
     public AudioClip landSound;
     public AudioClip power1Sound;
     public AudioClip jumpBuffSound;
-
     public AudioClip northPray;
     public AudioClip southPray;
     public AudioClip westPray;
     public AudioClip eastPray;
 
     [Header("Configuración de Sonido Aleatorio")]
-    [Range(0.8f, 1.2f)] public float minPitch = 0.9f;
-    [Range(0.8f, 1.2f)] public float maxPitch = 1.1f;
+    [Range(0.8f, 1.2f)] public float minPitch = 0.85f;
+    [Range(0.8f, 1.2f)] public float maxPitch = 1.15f;
 
     [Header("Colliders")]
     private CollisionChecker collisionChecker;
@@ -80,45 +78,47 @@ public class PlayerController : MonoBehaviour
     private bool canClimb;
     private bool isGroundNear;
 
+    // === Mecánica de Colgarse y Escalar ===
     private bool isClimbing = false;
-    private bool isAlreadyHanging = false; // Control para la alineación única
-    [SerializeField] private Vector3 climbVector = new Vector3(1f, 1.9f, 0);
-    public float offsetHanging = 0.3f;
+    private bool isAlreadyHanging = false; // Bloqueo para alinearse solo una vez al tocar el borde
+    [SerializeField] private Vector3 climbVector = new Vector3(1f, 1.995f, 0); // Desplazamiento final al subir
+    public float offsetHanging = 0.3f;     // Separación con la pared al colgarse
 
     [Header("Pray")]
     private bool isPraying = false;
     private GameObject currentDoor;
 
-    // Secuencia actual
+    // Lista para almacenar la secuencia de rezos que voy pulsando
     private List<string> currentSequence = new List<string>();
 
-    // Secuencias válidas Power 1
-    private readonly List<string> correctSequence1 = new List<string> { "West", "East", "South", "West","East", "South" };
+    // Secuencia para abrir la puerta (Oeste, Este, Sur, Oeste, Este, Sur)
+    private readonly List<string> correctSequence1 = new List<string> { "West", "East", "South", "West", "East", "South" };
 
     [Header("Jump Buff Pray")]
-    public float jumpBuffMultiplier = 1.5f; // Cuánto más saltará
+    public float jumpBuffMultiplier = 1.5f;
     public float buffDuration = 20f;
     private float originalJumpForce;
     private bool isJumpBuffActive = false;
 
-    // Secuancia válida Jump Buff
+    // Secuencia para super salto (Norte, Sur, Norte, Sur, Norte, Sur)
     private Renderer characterRenderer;
-    private readonly List<string> correctSequenceJump = new List<string> { "North", "South", "North", "South","North","South" };
+    private readonly List<string> correctSequenceJump = new List<string> { "North", "South", "North", "South", "North", "South" };
 
     [Header("Pray Visuals (Notes)")]
-    public GameObject praySpritesContainer; // El objeto 'PraySprites' que contiene las 6 notas
-    public GameObject l2Sprite; // El objeto 'PraySprites' que contiene las 6 notas
-    public SpriteRenderer[] noteRenderers;   // Arrastra aquí Note1, Note2... Note6 (en orden)
+    public GameObject praySpritesContainer; // Contenedor de las 6 notas en la interfaz
+    public GameObject l2Sprite;             // Indicador visual en el mundo (ej. "Pulsa L2")
+    public SpriteRenderer[] noteRenderers;   // Los 6 slots visuales para las notas en pantalla
     public Sprite spriteNorth, spriteSouth, spriteEast, spriteWest;
 
-    private GameObject currentAltar; // Almacena el altar en el que estamos
+    private GameObject currentAltar; // Altar en el que estoy metido actualmente
 
     void Awake()
     {
+        // Enlazo el Input System y los inputs específicos
         playerInput = GetComponent<PlayerInput>();
-
         PanelFade = GameObject.Find("FadePanel");
         animatorPanelFade = PanelFade.GetComponent<Animator>();
+
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         dashAction = playerInput.actions["Dash"];
@@ -129,92 +129,83 @@ public class PlayerController : MonoBehaviour
         southAction = playerInput.actions["South"];
         eastAction = playerInput.actions["East"];
         westAction = playerInput.actions["West"];
-
-
     }
 
     void Start()
     {
+        // Registro de componentes iniciales y guardado de valores originales
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         collisionChecker = GetComponent<CollisionChecker>();
-        GameManager.Instance.CheckPoint= transform.position;
+
+        GameManager.Instance.CheckPoint = transform.position; // Checkpoint inicial al nacer
         originalHeight = controller.height;
         originalCenter = controller.center;
         characterRenderer = GetComponentInChildren<Renderer>();
         originalJumpForce = jumpForce;
-
     }
 
     #region Update
 
     private void FixedUpdate()
     {
-        if (controller.isGrounded) 
+        // Gestión limpia de transiciones de suelo en el animador para evitar tirones
+        if (controller.isGrounded)
         {
             animator.SetBool("IsJumping", false);
             animator.SetBool("IsGrounded", true);
-
         }
         else
         {
             animator.SetBool("IsGrounded", false);
         }
     }
+
     void Update()
     {
-
+        // Botón de emergencia para volver al último checkpoint manualmente
         if (teleportAction.WasPressedThisFrame()) BackToCheckPoint();
 
-
+        // Actualizo datos del detector de colisiones externo
         wallCollision = collisionChecker.wallCollision;
         canClimb = collisionChecker.CanClimb;
         isGroundNear = collisionChecker.isGroundNear;
 
-
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
 
-
-        // Si aterriza mientras mantiene el gatillo, también salimos del modo aire
+        // Si caigo al suelo rezando, aseguro que la animación de salto termine
         if (controller.isGrounded && isPraying)
         {
             animator.SetBool("IsJumping", false);
         }
 
-
-
+        // Si estoy en mitad de un Dash o escalando, congelo por completo el resto de inputs del Update
         if (isDashing || isClimbing)
         {
-            Debug.Log("IsDashing:  " + isDashing);
-            Debug.Log("CanClimb:  " + canClimb);
-            Debug.Log("WallCollision:  " + wallCollision);
-            Debug.Log("IsGroundNear:  " + isGroundNear);
-            Debug.Log("IsClimbing:  " + isClimbing);
-            Debug.Log("Is Already Hanging:  " + isAlreadyHanging);
-  
             return;
         }
 
-        // --- PRAY MODE ---
+        // --- MODO REZO (PRAY MODE) ---
+        // Exijo estar en el suelo y quieto para poder rezar
         if (prayAction.IsPressed() && controller.isGrounded && !isDashing && !isClimbing)
         {
             if (!isPraying)
                 EnterPrayMode();
 
             HandlePrayInputs();
-            return;
+            return; // Bloqueo el movimiento normal mientras rezo
         }
         else if (isPraying && !prayAction.IsPressed())
         {
-            ExitPrayMode();
+            ExitPrayMode(); // Si suelto el botón de rezo, salgo inmediatamente
         }
 
-
-        // Lógica de detección: se mantiene si ya estábamos colgados o si el rayo detecta pared
+        // --- SISTEMA DE AGARRE EN PARED (HANGING) ---
+        // Condición para estar colgado: Tocar pared (o estar ya colgado), que se pueda escalar y que el suelo no esté cerca
         bool beingHanging = (wallCollision || isAlreadyHanging) && canClimb && !isGroundNear;
 
-        // Salida por suelo o input hacia abajo
-        if (inputVector.y < -0.1f || controller.isGrounded)
+        // Si pulso hacia abajo o toco el suelo, me descolgo automáticamente
+        if (inputVector.y < -0.1f || controller.isGrounded || inputVector.x < 0 && transform.localScale.z == 1 || inputVector.x > 0 && transform.localScale.z == -1)
         {
             beingHanging = false;
             isAlreadyHanging = false;
@@ -224,9 +215,7 @@ public class PlayerController : MonoBehaviour
 
         if (beingHanging)
         {
-            // --- ESTADO COLGADO ---
-
-            // Alineamos al personaje en el frame que toca la pared
+            // Si es el primer frame en el que me cuelgo, ajusto mi posición visual con la pared
             if (!isAlreadyHanging)
             {
                 CorrectHangingPosition();
@@ -234,28 +223,28 @@ public class PlayerController : MonoBehaviour
             }
 
             verticalVelocity = 0;
-            moveDirection = Vector3.zero; // Bloquea cualquier movimiento previo
+            moveDirection = Vector3.zero; // Cancelo inercias previas
 
-            // Iniciar escalada
-            if (inputVector.y > 0.1f)
+            // Si pulso arriba, inicio la animación/rutina de subir el bordillo
+            if (inputVector.y > 0.1f || inputVector.x > 0 && transform.localScale.z == 1 || inputVector.x < 0 && transform.localScale.z == -1)
             {
                 isAlreadyHanging = false;
                 ClimbRoutine();
                 return;
             }
 
-            // Mantiene al personaje estático en el aire
+            // Clavo al personaje en el sitio para que no le afecte la gravedad
             controller.Move(Vector3.zero);
         }
         else
         {
-            // --- ESTADO MOVIMIENTO NORMAL ---
+            // --- MOVIMIENTO NORMAL Y TIERRA ---
             isAlreadyHanging = false;
 
             HandleCrouch();
             HandleDashInput();
 
-            // Solo procesamos movimiento horizontal si NO estamos colgados
+            // Solo me muevo de lado si no estoy agachado
             if (!isCrouched)
                 HandleAnalogMovement();
             else
@@ -264,20 +253,21 @@ public class PlayerController : MonoBehaviour
             HandleVariableJump();
             ApplyGravity();
 
+            // Ejecuto el movimiento final calculado en este frame
             controller.Move(moveDirection * Time.deltaTime);
         }
-
     }
     #endregion
 
     private void CorrectHangingPosition()
     {
+        // Apago el controller un momento para poder teletransportar al personaje sin conflictos de colisión
         controller.enabled = false;
 
-        // Dirección basada en escala (Z es tu eje de flip según el CollisionChecker)
+        // Detecto hacia dónde miro usando la escala en Z
         float faceDir = transform.localScale.z > 0 ? 1f : -1f;
 
-        // Usamos el punto de impacto exacto del Raycast para el ajuste
+        // Ajusto la X basándome en el punto exacto de impacto que detectó el CollisionChecker
         Vector3 alignedPos = collisionChecker.wallHitPoint;
         alignedPos.x -= (offsetHanging * faceDir);
         alignedPos.y = transform.position.y;
@@ -290,16 +280,16 @@ public class PlayerController : MonoBehaviour
     private void ClimbRoutine()
     {
         isClimbing = true;
-        // La posición ya es correcta por el ajuste al colgarse
         animator.SetBool("canClimb", true);
         animator.SetBool("IsHanging", true);
-        
     }
 
+    // Este método lo llamo desde un Evento de Animación justo cuando termina de subir visualmente
     public void FinishClimbMovement()
     {
         controller.enabled = false;
         float direction = transform.localScale.z > 0 ? 1f : -1f;
+        // Desplazo al personaje arriba y adelante para dejarlo sobre la plataforma
         transform.position += new Vector3(direction * climbVector.x, climbVector.y, 0);
         controller.enabled = true;
 
@@ -315,12 +305,14 @@ public class PlayerController : MonoBehaviour
 
         moveDirection.x = horizontal * moveSpeed;
 
+        // Volteo el personaje (Flip) cambiando la escala en Z según la dirección
         if (horizontal > 0.1f) transform.localScale = new Vector3(1, 1, 1);
         else if (horizontal < -0.1f) transform.localScale = new Vector3(1, 1, -1);
 
         bool isWalking = inputIntensity > 0.1f;
         animator.SetBool("IsWalking", isWalking);
 
+        // Ajusto la velocidad de la animación de caminar según cuánto incline el joystick
         if (isWalking)
         {
             float animSpeed = Mathf.Lerp(0.5f, 1.0f, inputIntensity);
@@ -328,10 +320,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     void StopHorizontalMovement()
     {
-        Debug.Log("Dejó de moverse");
         moveDirection.x = 0;
         animator.SetBool("IsWalking", false);
         animator.SetFloat("WalkSpeedMultiplier", 1.0f);
@@ -339,7 +329,6 @@ public class PlayerController : MonoBehaviour
 
     void HandleCrouch()
     {
-
         Vector2 inputVector = moveAction.ReadValue<Vector2>();
         bool wantsToCrouch = crouchAction.IsPressed() && controller.isGrounded;
 
@@ -347,7 +336,7 @@ public class PlayerController : MonoBehaviour
         {
             isCrouched = true;
             animator.SetBool("IsCrouched", true);
-            SetColliderHeight(originalHeight / 2.5f, 0.4f);
+            SetColliderHeight(originalHeight / 2.5f, 0.4f); // Encojo el collider a menos de la mitad
             if (crouchSound) audioSource.PlayOneShot(crouchSound);
         }
         else if (!wantsToCrouch && isCrouched)
@@ -360,7 +349,7 @@ public class PlayerController : MonoBehaviour
     {
         isCrouched = false;
         animator.SetBool("IsCrouched", false);
-        SetColliderHeight(originalHeight, 1f);
+        SetColliderHeight(originalHeight, 1f); // Devuelvo el collider a su tamaño original
     }
 
     void SetColliderHeight(float newHeight, float centerMultiplier)
@@ -371,38 +360,41 @@ public class PlayerController : MonoBehaviour
 
     public void HandleVariableJump()
     {
-        // 1. Detectamos si el jugador está manteniendo hacia abajo
         Vector2 moveInput = moveAction.ReadValue<Vector2>();
         bool isPressingDown = moveInput.y < -0.5f;
 
         if (controller.isGrounded)
         {
-            coyoteTimer = coyoteTime;
+            coyoteTimer = coyoteTime; // Reseteo el tiempo de Coyote al pisar el suelo
             hasDoubleJumped = false;
             animator.SetBool("IsJumping", false);
+            // Si venía cayendo rápido, reproduzco sonido de aterrizaje con pitch variado
             if (verticalVelocity < -5f && landSound) PlayRandomPitch(landSound);
         }
         else
         {
             coyoteTimer -= Time.deltaTime;
+
+            // SALTO VARIABLE: Si suelto el botón de salto subiendo, corto el impulso a la mitad
             if (jumpAction.WasReleasedThisFrame() && verticalVelocity > 0)
                 verticalVelocity *= cutJumpHeight;
 
             if (verticalVelocity < -1f) animator.SetBool("IsJumping", true);
         }
 
+        // Buffer de entrada para el salto
         if (jumpAction.WasPressedThisFrame()) inputTimer = inputBuffer;
         else inputTimer -= Time.deltaTime;
 
         if (inputTimer > 0)
         {
-            // 2. Añadimos "!isPressingDown" a las condiciones de salto
-            // Si está pulsando abajo, estas condiciones serán falsas y NO llamará a DoJump
+            // Bloqueo el salto si estoy pulsando hacia abajo (evita saltos raros al querer bajar/agacharse)
             if (coyoteTimer > 0 && !isCrouched && !isPressingDown)
             {
                 DoJump(jumpForce, jumpSound);
-                coyoteTimer = 0;
+                coyoteTimer = 0; // Consumo el Coyote Time
             }
+            // Lógica para el doble salto si está desbloqueado en el juego
             else if (!controller.isGrounded && !hasDoubleJumped && GameManager.Instance.canDoubleJump && !isPressingDown)
             {
                 hasDoubleJumped = true;
@@ -415,7 +407,8 @@ public class PlayerController : MonoBehaviour
     {
         verticalVelocity = force;
         moveDirection.y = verticalVelocity;
-        // Si ya estamos saltando (es decir, es un doble salto), disparamos el trigger
+
+        // Activo los triggers necesarios en el Animator
         if (animator.GetBool("IsJumping"))
         {
             animator.SetTrigger("DoubleJump");
@@ -425,21 +418,23 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("DoubleJump");
             animator.SetBool("IsJumping", true);
         }
-        // REEMPLAZO: Usamos la función con pitch aleatorio
+
         if (sound) PlayRandomPitch(sound);
-        inputTimer = 0;
+        inputTimer = 0; // Consumo el buffer de salto
     }
 
     void ApplyGravity()
     {
+        // Fuerza constante hacia abajo al estar en el suelo para evitar que flote en pendientes descendientes
         if (controller.isGrounded && verticalVelocity < 0) verticalVelocity = -2f;
         else verticalVelocity -= gravity * Time.deltaTime;
+
         moveDirection.y = verticalVelocity;
     }
 
     public void HandleDashInput()
     {
-        // Dash es "Right Trigger"
+        // Solo permito el dash si está listo, desbloqueado en el GameManager y estoy tocando el suelo
         if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0 && GameManager.Instance.canDash && controller.isGrounded)
         {
             StartCoroutine(DashRoutine());
@@ -455,33 +450,35 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("IsDashing", true);
         if (dashSound) PlayRandomPitch(dashSound);
 
-        SetColliderHeight(originalHeight / 2.5f, 0.4f);
+        SetColliderHeight(originalHeight / 2.5f, 0.4f); // Encojo el collider para pasar por sitios estrechos durante el dash
 
         float direction = transform.localScale.z > 0 ? 1f : -1f;
         float startTime = Time.time;
 
+        // Bucle temporal para desplazar al personaje a velocidad constante lo que dure el dash
         while (Time.time < startTime + dashDuration)
         {
             controller.Move(new Vector3(direction * dashSpeed, 0, 0) * Time.deltaTime);
             yield return null;
         }
 
-        SetColliderHeight(originalHeight, 1f);
+        SetColliderHeight(originalHeight, 1f); // Devuelvo el collider a la normalidad
         animator.SetBool("IsDashing", false);
         isDashing = false;
     }
 
     public void BackToCheckPoint()
     {
-        animatorPanelFade.SetTrigger("Fade");
+        animatorPanelFade.SetTrigger("Fade"); // Lanzo la animación de fundido a negro
         controller.enabled = false;
-        transform.position = GameManager.Instance.CheckPoint;
+        transform.position = GameManager.Instance.CheckPoint; // Lo muevo al checkpoint guardado
         verticalVelocity = 0;
         controller.enabled = true;
     }
 
     private void HandlePrayInputs()
     {
+        // Escucho las 4 direcciones mientras rezo para guardar el código e iniciar sus respectivos sonidos estables
         if (northAction.WasPressedThisFrame())
         {
             RegisterPrayInput("North");
@@ -497,87 +494,76 @@ public class PlayerController : MonoBehaviour
             RegisterPrayInput("East");
             audioSourceNoChanges.PlayOneShot(eastPray);
         }
-
         if (westAction.WasPressedThisFrame())
         {
             RegisterPrayInput("West");
             audioSourceNoChanges.PlayOneShot(westPray);
         }
-
     }
 
     private void EnterPrayMode()
     {
-        // Desactivamos el sprite de instrucción inmediatamente
-        if (l2Sprite != null) l2Sprite.SetActive(false);
+        if (l2Sprite != null) l2Sprite.SetActive(false); // Oculto el texto flotante de "Rezar"
         isPraying = true;
-        currentSequence.Clear();
+        currentSequence.Clear(); // Limpio basura de intentos anteriores
         animator.SetBool("IsPraying", true);
 
-        // Mostramos el contenedor y limpiamos los dibujos anteriores
-        if (praySpritesContainer != null) praySpritesContainer.SetActive(true);
+        if (praySpritesContainer != null) praySpritesContainer.SetActive(true); // Muestro el HUD de las notas musicales
         ClearAllNotes();
 
-        // Bloquea movimiento
+        // Freno en seco al personaje para que rece quieto
         moveDirection = Vector3.zero;
         verticalVelocity = 0;
     }
 
     private void ExitPrayMode()
     {
-
         isPraying = false;
         animator.SetBool("IsPraying", false);
         currentSequence.Clear();
-        // Ocultamos el contenedor
-        if (praySpritesContainer != null) praySpritesContainer.SetActive(false);
+        if (praySpritesContainer != null) praySpritesContainer.SetActive(false); // Oculto el HUD de notas
     }
+
     private void RegisterPrayInput(string dir)
     {
-        // --- NUEVA LÓGICA DE REINICIO ---
-        // Si ya hay 6 notas en la lista, significa que el siguiente rezo es el séptimo.
-        // Reiniciamos la lista y limpiamos los sprites para empezar de nuevo en Note1.
+        // Si ya metí 6 notas (el límite de la contraseña), limpio el HUD para volver a empezar desde la primera
         if (currentSequence.Count >= noteRenderers.Length)
         {
             currentSequence.Clear();
             ClearAllNotes();
-            Debug.Log("Límite de rezos alcanzado. Reiniciando secuencia visual.");
         }
-        // 1. Dibujar el sprite en el hueco correspondiente
-        // Usamos currentSequence.Count porque nos dice cuántas notas llevamos ya
+
+        // Pinto el sprite de la dirección correspondiente en el hueco que toca del HUD
         if (currentSequence.Count < noteRenderers.Length)
         {
             DrawNote(currentSequence.Count, dir);
         }
-        // Detectamos si el jugador está mirando a la izquierda
-        bool isFacingLeft = transform.localScale.z < 0;
 
+        // --- AJUSTE VISUAL DEL ESPEJO ---
+        // Si el personaje mira a la izquierda (Z < 0), invierto Este y Oeste solo para la animación visual,
+        // garantizando que los movimientos del cuerpo coincidan correctamente hacia donde mira.
+        bool isFacingLeft = transform.localScale.z < 0;
         string finalDir = dir;
 
-        // Si mira a la izquierda, invertimos solo las animaciones laterales
         if (isFacingLeft)
         {
             if (dir == "East") finalDir = "West";
             else if (dir == "West") finalDir = "East";
         }
 
-        // El Animator recibe la dirección invertida visualmente
         animator.SetTrigger(finalDir);
 
-        // IMPORTANTE: La lógica de la secuencia (CheckSequence) debe seguir 
-        // recibiendo la dirección ORIGINAL 'dir' para que los botones 
-        // que pulsa el jugador coincidan con la contraseña técnica.
+        // Agrego la dirección ORIGINAL a la lista técnica, para que la contraseña no falle por el "Espejo visual"
         currentSequence.Add(dir);
 
-        CheckSequence();
+        CheckSequence(); // Compruebo si ya completó alguna combinación correcta
     }
-    // --- Métodos de apoyo ---
 
     private void DrawNote(int index, string dir)
     {
         if (noteRenderers[index] == null) return;
 
-        // Asignamos el sprite según la dirección pulsada
+        // Asigno el recurso visual de la flecha/nota según la dirección pulsada
         switch (dir)
         {
             case "North": noteRenderers[index].sprite = spriteNorth; break;
@@ -589,94 +575,83 @@ public class PlayerController : MonoBehaviour
 
     private void ClearAllNotes()
     {
+        // Limpio por completo las imágenes de los slots del HUD de rezo
         foreach (var renderer in noteRenderers)
         {
             if (renderer != null) renderer.sprite = null;
         }
     }
+
     private void CheckSequence()
     {
-        // Comprobar Secuencia 1 (Puerta)
+        // Verifico si es la secuencia para romper la puerta
         CheckSpecificSequence(currentSequence, correctSequence1, ActivatePray1);
 
-        // Comprobar Secuencia 2 (Salto)
+        // Verifico si es la secuencia para el buff de salto
         CheckSpecificSequence(currentSequence, correctSequenceJump, ActivateJumpBuff);
     }
 
-    // Método auxiliar para no repetir código de comparación
+    // Método automatizado para comparar listas de secuencias sin duplicar código
     private void CheckSpecificSequence(List<string> current, List<string> target, System.Action onSuccess)
     {
         if (current.Count != target.Count) return;
 
         for (int i = 0; i < current.Count; i++)
         {
-            if (current[i] != target[i]) return;
+            if (current[i] != target[i]) return; // Si un solo botón no coincide, aborto
         }
 
-        onSuccess?.Invoke();
-        currentSequence.Clear(); // Limpiamos tras éxito
+        onSuccess?.Invoke(); // Ejecuto la función que pasé por parámetro (ActivatePray1 o ActivateJumpBuff)
+        currentSequence.Clear();
     }
 
     private void ActivatePray1()
     {
         l2Sprite.SetActive(false);
         animator.SetTrigger("Power1");
-        
 
-
-        // Comprobamos si hay una puerta guardada en la referencia
+        // Si tengo una puerta guardada en rango, la destruyo y limpio la referencia
         if (currentDoor != null)
         {
-            Debug.Log("Puerta detectada: " + currentDoor.name + ". Procediendo a destruir.");
             Destroy(currentDoor);
             audioSource.PlayOneShot(power1Sound);
-            currentDoor = null; // Limpiamos la referencia tras destruir
-            
-        }
-        else
-        {
-            Debug.Log("No hay ninguna puerta con el tag 'Door1' cerca.");
+            currentDoor = null;
         }
     }
 
     private void ActivateJumpBuff()
     {
-        // Solo se activa si NO está activo ya Y si estamos en un Altar
+        // Solo lo activo si no está ya puesto y si estoy físicamente dentro de un Altar válido
         if (!isJumpBuffActive && currentAltar != null)
         {
             StartCoroutine(JumpBuffRoutine());
         }
         else if (currentAltar == null)
         {
-
-            currentSequence.Clear();
+            currentSequence.Clear(); // Si intento el truco fuera del altar, limpio el código metido
         }
-        //Solo se activa si NO está activo ya Y si estamos en un Altar
-
     }
 
     IEnumerator JumpBuffRoutine()
     {
         isJumpBuffActive = true;
-        jumpForce = originalJumpForce * jumpBuffMultiplier;
+        jumpForce = originalJumpForce * jumpBuffMultiplier; // Aplico la multiplicación de salto
         audioSourceNoChanges.PlayOneShot(jumpBuffSound);
 
         animator.SetTrigger("Power1");
         if (power1Sound) audioSourceNoChanges.PlayOneShot(power1Sound);
 
-        // CAMBIO DE COLOR EN 3D
-        // Usamos .material (crea una instancia única para que no cambien todos los enemigos)
+        // Feedback visual: Instancio el material de forma única y pinto al personaje de rojo
         if (characterRenderer != null)
         {
             characterRenderer.material.color = Color.red;
         }
 
-        yield return new WaitForSeconds(buffDuration);
+        yield return new WaitForSeconds(buffDuration); // Mantengo el estado el tiempo configurado
 
-        // RESTAURAR FUERZA
+        // Restauración de valores iniciales (fuerza y color blanco original)
         jumpForce = originalJumpForce;
 
-        // RESTAURAR COLOR
         if (characterRenderer != null)
         {
             characterRenderer.material.color = Color.white;
@@ -684,40 +659,35 @@ public class PlayerController : MonoBehaviour
 
         isJumpBuffActive = false;
     }
+
     private void PlayRandomPitch(AudioClip clip)
     {
         if (clip == null || audioSource == null) return;
 
-        // Cambiamos el pitch aleatoriamente
+        // Modifico levemente el tono (pitch) para que los sonidos repetitivos como saltar no cansen al jugador
         audioSource.pitch = Random.Range(minPitch, maxPitch);
-
-        // Reproducimos
         audioSource.PlayOneShot(clip);
-
     }
 
+    // === DETECCIÓN DE ZONAS E INTERACTUABLES (TRIGGERS) ===
     private void OnTriggerEnter(Collider other)
     {
-        // Si el objeto que tocamos tiene el tag correcto, lo guardamos
+        // Almaceno la puerta si entro en su área
         if (other.CompareTag("Door1"))
         {
-            
             currentDoor = other.gameObject;
         }
-        // NUEVO: Detección de Altar
+        // Almaceno el altar si entro en su área
         if (other.CompareTag("Altar"))
         {
-
-            
             currentAltar = other.gameObject;
-            
         }
-
+        // Actualizo checkpoint del GameManager automáticamente al pisar la zona
         if (other.CompareTag("CheckPoint"))
         {
             GameManager.Instance.CheckPoint = transform.position;
         }
-
+        // Si caigo al vacío, me devuelvo instantáneamente al checkpoint
         if (other.CompareTag("DeadZone"))
         {
             BackToCheckPoint();
@@ -726,9 +696,9 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
+        // Mientras esté cerca de altares o puertas, muestro el aviso de "Rezar" en pantalla (L2) a menos que ya esté rezando
         if (other.CompareTag("Door1") || other.CompareTag("Altar"))
         {
-            // El sprite solo se activa si NO estamos en modo rezo
             if (!isPraying)
             {
                 l2Sprite.SetActive(true);
@@ -740,24 +710,18 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     private void OnTriggerExit(Collider other)
     {
-        // Si nos alejamos de la puerta, limpiamos la referencia
-        // para que no se pueda destruir desde lejos
+        // Al alejarme de los interactuables, apago avisos y limpio referencias por seguridad (así evito activar cosas desde lejos)
         if (other.CompareTag("Door1"))
         {
             l2Sprite.SetActive(false);
-
             currentDoor = null;
         }
-        // NUEVO: Salir del rango del Altar
         if (other.CompareTag("Altar"))
         {
             currentAltar = null;
             l2Sprite.SetActive(false);
-            Debug.Log("Te has alejado del altar.");
         }
     }
-
 }
