@@ -47,8 +47,8 @@ Material:
     - _GlossyReflections: 1
     - _Parallax: 0.02
     - _Surface: 1
-    - _Threshold: -0.42
-    - _Velocity: -2.14
+    - _Threshold: -1
+    - _Velocity: -3.17
     - _ZWrite: 0
     m_Colors:
     - _BaseColor: {r: 0, g: 0.9226117, b: 1, a: 0.72156864}
