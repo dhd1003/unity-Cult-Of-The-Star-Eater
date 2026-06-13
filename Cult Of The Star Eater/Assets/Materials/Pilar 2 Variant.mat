@@ -39,7 +39,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _NoiseOpacity: -0.89
-    - _NoiseSize: 80.29
+    - _NoiseSize: 47.02
     m_Colors:
     - _NoiseColor: {r: 0.13962269, g: 0, b: 0.006022981, a: 0}
   m_BuildTextureStacks: []

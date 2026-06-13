@@ -15,13 +15,13 @@ MonoBehaviour:
   active: 1
   mode:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 1
   gaussianStart:
-    m_OverrideState: 0
-    m_Value: 17.28
+    m_OverrideState: 1
+    m_Value: 7.8
   gaussianEnd:
     m_OverrideState: 1
-    m_Value: 8000
+    m_Value: 5845
   gaussianMaxRadius:
     m_OverrideState: 1
     m_Value: 1.5
@@ -30,7 +30,7 @@ MonoBehaviour:
     m_Value: 0
   focusDistance:
     m_OverrideState: 1
-    m_Value: 38
+    m_Value: 47.62
   aperture:
     m_OverrideState: 1
     m_Value: 1.9
