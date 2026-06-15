@@ -110,8 +110,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _Threshold: 1
-    - _Velocity: -5
+    - _Threshold: 0.2
+    - _Velocity: -1.56
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

@@ -105,10 +105,15 @@ public class PlayerController : MonoBehaviour
     private readonly List<string> correctSequenceJump = new List<string> { "North", "South", "North", "South", "North", "South" };
 
     [Header("Pray Visuals (Notes)")]
-    public GameObject praySpritesContainer; // Contenedor de las 6 notas en la interfaz
-    public GameObject l2Sprite;             // Indicador visual en el mundo (ej. "Pulsa L2")
-    public SpriteRenderer[] noteRenderers;   // Los 6 slots visuales para las notas en pantalla
-    public Sprite spriteNorth, spriteSouth, spriteEast, spriteWest;
+    public GameObject praySpritesContainer;
+    public GameObject l2Sprite;
+    public SpriteRenderer[] noteRenderers;
+
+    [Header("Sprites Teclado / Ratón")]
+    public Sprite keyboardNorth, keyboardSouth, keyboardEast, keyboardWest;
+
+    [Header("Sprites Mando (Gamepad)")]
+    public Sprite gamepadNorth, gamepadSouth, gamepadEast, gamepadWest;
 
     private GameObject currentAltar; // Altar en el que estoy metido actualmente
 
@@ -559,17 +564,48 @@ public class PlayerController : MonoBehaviour
         CheckSequence(); // Compruebo si ya completó alguna combinación correcta
     }
 
+    private InputDevice GetLastUsedDevice()
+    {
+        InputDevice activeDevice = null;
+        double latestUpdateTime = 0;
+
+        foreach (var device in InputSystem.devices)
+        {
+            if (device is Gamepad || device is Keyboard || device is Mouse)
+            {
+                if (device.lastUpdateTime > latestUpdateTime)
+                {
+                    latestUpdateTime = device.lastUpdateTime;
+                    activeDevice = device;
+                }
+            }
+        }
+        return activeDevice;
+    }
+
     private void DrawNote(int index, string dir)
     {
         if (noteRenderers[index] == null) return;
 
-        // Asigno el recurso visual de la flecha/nota según la dirección pulsada
+        // Averiguamos el dispositivo en el instante en que pulsas el botón
+        InputDevice lastDevice = GetLastUsedDevice();
+        bool isGamepad = lastDevice is Gamepad;
+
+        // Asignamos el sprite correspondiente según el dispositivo y la dirección
         switch (dir)
         {
-            case "North": noteRenderers[index].sprite = spriteNorth; break;
-            case "South": noteRenderers[index].sprite = spriteSouth; break;
-            case "East": noteRenderers[index].sprite = spriteEast; break;
-            case "West": noteRenderers[index].sprite = spriteWest; break;
+            case "North":
+                noteRenderers[index].sprite = isGamepad ? gamepadNorth : keyboardNorth;
+                break;
+            case "South":
+                noteRenderers[index].sprite = isGamepad ? gamepadSouth : keyboardSouth;
+                break;
+            case "East":
+                noteRenderers[index].sprite = isGamepad ? gamepadEast : keyboardEast;
+                break;
+            case "West":
+                noteRenderers[index].sprite = isGamepad ? gamepadWest : keyboardWest;
+                break;
         }
     }
 
