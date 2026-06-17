@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     private InputAction eastAction;
     private InputAction westAction;
 
+
     [Header("Movimiento")]
     public float moveSpeed = 6f;
     public float gravity = 25f;

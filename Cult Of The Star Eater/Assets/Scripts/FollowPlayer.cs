@@ -8,6 +8,7 @@ public class FollowPlayer : MonoBehaviour
     [SerializeField] private GameObject player;
     [SerializeField] private float offsetY;
     [SerializeField] private float offsetX;
+    [SerializeField] private float offsetZ;
     void Start()
     {
         
@@ -16,7 +17,7 @@ public class FollowPlayer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.position = player.transform.position + new Vector3 (offsetX, offsetY, 0f);
+        transform.position = player.transform.position + new Vector3 (offsetX, offsetY, offsetZ);
            
     }
 }
